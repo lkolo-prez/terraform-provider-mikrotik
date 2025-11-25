@@ -2,3 +2,21 @@ terraform-provider-mikrotik
 dist/
 vendor
 .vscode/
+
+# GPG keys - NEVER commit these!
+*.asc
+private-key.*
+public-key.*
+
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Output of go build
+bin/
+*.out
