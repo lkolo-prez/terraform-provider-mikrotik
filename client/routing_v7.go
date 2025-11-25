@@ -2,16 +2,60 @@ package client
 
 import (
 	"fmt"
+
+	"github.com/go-routeros/routeros/v3"
 )
 
 // RoutingTable represents RouterOS v7 routing table (VRF support)
 // Reference: https://help.mikrotik.com/docs/display/ROS/Routing+Tables
 type RoutingTable struct {
 	Id       string `mikrotik:".id" codegen:"id,mikrotikID"`
-	Name     string `mikrotik:"name" codegen:"name,required"`
-	Fib      string `mikrotik:"fib" codegen:"fib"`      // Push routes to FIB: yes/no
-	Disabled string `mikrotik:"disabled" codegen:"disabled"`
+	Name     string `mikrotik:"name" codegen:"name,required,terraformID"`
+	Fib      string `mikrotik:"fib" codegen:"fib"`
+	Disabled bool   `mikrotik:"disabled" codegen:"disabled"`
 	Comment  string `mikrotik:"comment" codegen:"comment"`
+}
+
+var _ Resource = (*RoutingTable)(nil)
+
+// IDField returns the field name for MikroTik ID
+func (rt *RoutingTable) IDField() string {
+	return ".id"
+}
+
+// ID returns the resource ID
+func (rt *RoutingTable) ID() string {
+	return rt.Id
+}
+
+// SetID sets the resource ID
+func (rt *RoutingTable) SetID(id string) {
+	rt.Id = id
+}
+
+// AfterAddHook is called after successful Add operation
+func (rt *RoutingTable) AfterAddHook(r *routeros.Reply) {
+	rt.Id = r.Done.Map["ret"]
+}
+
+// FindField returns the field name to use for finding resources
+func (rt *RoutingTable) FindField() string {
+	return "name"
+}
+
+// FindFieldValue returns the value for finding resources
+func (rt *RoutingTable) FindFieldValue() string {
+	return rt.Name
+}
+
+// DeleteField returns the field name to use for deletion
+func (rt *RoutingTable) DeleteField() string {
+	return "numbers"
+}
+
+// DeleteFieldValue returns the value for deletion
+func (rt *RoutingTable) DeleteFieldValue() string {
+	return rt.Name
 }
 
 // RoutingRule represents RouterOS v7 routing rule (policy-based routing)
@@ -71,79 +115,81 @@ func (vrf *VRF) ActionToCommand(action Action) string {
 	}[action]
 }
 
-// FindRoutingTable finds a routing table by name
+// FindRoutingTable finds a routing table by name (legacy method)
 func (client Mikrotik) FindRoutingTable(name string) (*RoutingTable, error) {
-	c, err := client.getMikrotikClient()
+	rt := &RoutingTable{Name: name}
+	res, err := client.Find(rt)
 	if err != nil {
 		return nil, err
 	}
-
-	cmd := []string{"/routing/table/print", "?name=" + name}
-	reply, err := c.RunArgs(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(reply.Re) == 0 {
-		return nil, NewNotFound(fmt.Sprintf("routing table '%s' not found", name))
-	}
-
-	table := &RoutingTable{}
-	err = Unmarshal(*reply, table)
-	if err != nil {
-		return nil, err
-	}
-
-	return table, nil
+	return res.(*RoutingTable), nil
 }
 
-// CreateRoutingTable creates a new routing table (VRF)
+// CreateRoutingTable creates a new routing table (VRF) (legacy method)
 func (client Mikrotik) CreateRoutingTable(table *RoutingTable) (*RoutingTable, error) {
-	c, err := client.getMikrotikClient()
+	res, err := client.Add(table)
 	if err != nil {
 		return nil, err
 	}
-
-	cmd := Marshal("/routing/table/add", table)
-	_, err = c.RunArgs(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	return client.FindRoutingTable(table.Name)
+	return res.(*RoutingTable), nil
 }
 
-// UpdateRoutingTable updates an existing routing table
+// UpdateRoutingTable updates an existing routing table (legacy method)
 func (client Mikrotik) UpdateRoutingTable(table *RoutingTable) (*RoutingTable, error) {
-	c, err := client.getMikrotikClient()
+	res, err := client.Update(table)
 	if err != nil {
 		return nil, err
 	}
-
-	cmd := Marshal("/routing/table/set", table)
-	_, err = c.RunArgs(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	return client.FindRoutingTable(table.Name)
+	return res.(*RoutingTable), nil
 }
 
-// DeleteRoutingTable deletes a routing table
+// DeleteRoutingTable deletes a routing table (legacy method)
 func (client Mikrotik) DeleteRoutingTable(name string) error {
-	c, err := client.getMikrotikClient()
-	if err != nil {
-		return err
-	}
+	rt := &RoutingTable{Name: name}
+	return client.Delete(rt)
+}
 
-	table, err := client.FindRoutingTable(name)
+// Typed wrappers for generic CRUD operations
+func (c Mikrotik) AddRoutingTable(r *RoutingTable) (*RoutingTable, error) {
+	res, err := c.Add(r)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return res.(*RoutingTable), nil
+}
 
-	cmd := []string{"/routing/table/remove", "=.id=" + table.Id}
-	_, err = c.RunArgs(cmd)
-	return err
+func (c Mikrotik) UpdateRoutingTable2(r *RoutingTable) (*RoutingTable, error) {
+	res, err := c.Update(r)
+	if err != nil {
+		return nil, err
+	}
+	return res.(*RoutingTable), nil
+}
+
+func (c Mikrotik) FindRoutingTable2(name string) (*RoutingTable, error) {
+	rt := &RoutingTable{Name: name}
+	res, err := c.Find(rt)
+	if err != nil {
+		return nil, err
+	}
+	return res.(*RoutingTable), nil
+}
+
+func (c Mikrotik) ListRoutingTables() ([]RoutingTable, error) {
+	res, err := c.List(&RoutingTable{})
+	if err != nil {
+		return nil, err
+	}
+	returnSlice := make([]RoutingTable, len(res))
+	for i, v := range res {
+		returnSlice[i] = *(v.(*RoutingTable))
+	}
+	return returnSlice, nil
+}
+
+func (c Mikrotik) DeleteRoutingTable2(name string) error {
+	rt := &RoutingTable{Name: name}
+	return c.Delete(rt)
 }
 
 // FindRoutingRule finds a routing rule by ID
