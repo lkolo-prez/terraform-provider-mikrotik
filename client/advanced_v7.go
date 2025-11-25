@@ -94,27 +94,52 @@ type QueueType struct {
 
 // ActionToCommand returns the RouterOS CLI path for InterfaceVeth
 func (veth *InterfaceVeth) ActionToCommand(action Action) string {
-	return "/interface/veth" + action.ToCommand()
+	return map[Action]string{
+		Add:    "/interface/veth/add",
+		Find:   "/interface/veth/print",
+		Update: "/interface/veth/set",
+		Delete: "/interface/veth/remove",
+	}[action]
 }
 
 // ActionToCommand returns the RouterOS CLI path for WiFiRadio
 func (radio *WiFiRadio) ActionToCommand(action Action) string {
-	return "/interface/wifi/radio" + action.ToCommand()
+	return map[Action]string{
+		Add:    "/interface/wifi/radio/add",
+		Find:   "/interface/wifi/radio/print",
+		Update: "/interface/wifi/radio/set",
+		Delete: "/interface/wifi/radio/remove",
+	}[action]
 }
 
 // ActionToCommand returns the RouterOS CLI path for WiFiConfiguration
 func (cfg *WiFiConfiguration) ActionToCommand(action Action) string {
-	return "/interface/wifi/configuration" + action.ToCommand()
+	return map[Action]string{
+		Add:    "/interface/wifi/configuration/add",
+		Find:   "/interface/wifi/configuration/print",
+		Update: "/interface/wifi/configuration/set",
+		Delete: "/interface/wifi/configuration/remove",
+	}[action]
 }
 
 // ActionToCommand returns the RouterOS CLI path for WiFiSecurity
 func (sec *WiFiSecurity) ActionToCommand(action Action) string {
-	return "/interface/wifi/security" + action.ToCommand()
+	return map[Action]string{
+		Add:    "/interface/wifi/security/add",
+		Find:   "/interface/wifi/security/print",
+		Update: "/interface/wifi/security/set",
+		Delete: "/interface/wifi/security/remove",
+	}[action]
 }
 
 // ActionToCommand returns the RouterOS CLI path for QueueType
 func (qt *QueueType) ActionToCommand(action Action) string {
-	return "/queue/type" + action.ToCommand()
+	return map[Action]string{
+		Add:    "/queue/type/add",
+		Find:   "/queue/type/print",
+		Update: "/queue/type/set",
+		Delete: "/queue/type/remove",
+	}[action]
 }
 
 // FindInterfaceVeth finds a veth interface by name
@@ -135,7 +160,7 @@ func (client Mikrotik) FindInterfaceVeth(name string) (*InterfaceVeth, error) {
 	}
 
 	veth := &InterfaceVeth{}
-	err = Unmarshal(*reply.Re[0], veth)
+	err = Unmarshal(reply.Re[0], veth)
 	if err != nil {
 		return nil, err
 	}
@@ -209,13 +234,13 @@ func (client Mikrotik) FindQueueType(name string) (*QueueType, error) {
 		return nil, NewNotFound(fmt.Sprintf("queue type '%s' not found", name))
 	}
 
-	qtype := &QueueType{}
-	err = Unmarshal(*reply.Re[0], qtype)
+	qt := &QueueType{}
+	err = Unmarshal(reply.Re[0], qt)
 	if err != nil {
 		return nil, err
 	}
 
-	return qtype, nil
+	return qt, nil
 }
 
 // CreateQueueType creates a new queue type

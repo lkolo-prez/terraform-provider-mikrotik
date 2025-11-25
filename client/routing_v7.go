@@ -44,17 +44,32 @@ type VRF struct {
 
 // ActionToCommand returns the RouterOS CLI path for RoutingTable
 func (rt *RoutingTable) ActionToCommand(action Action) string {
-	return "/routing/table" + action.ToCommand()
+	return map[Action]string{
+		Add:    "/routing/table/add",
+		Find:   "/routing/table/print",
+		Update: "/routing/table/set",
+		Delete: "/routing/table/remove",
+	}[action]
 }
 
 // ActionToCommand returns the RouterOS CLI path for RoutingRule
 func (rr *RoutingRule) ActionToCommand(action Action) string {
-	return "/routing/rule" + action.ToCommand()
+	return map[Action]string{
+		Add:    "/routing/rule/add",
+		Find:   "/routing/rule/print",
+		Update: "/routing/rule/set",
+		Delete: "/routing/rule/remove",
+	}[action]
 }
 
 // ActionToCommand returns the RouterOS CLI path for VRF
 func (vrf *VRF) ActionToCommand(action Action) string {
-	return "/ip/vrf" + action.ToCommand()
+	return map[Action]string{
+		Add:    "/ip/vrf/add",
+		Find:   "/ip/vrf/print",
+		Update: "/ip/vrf/set",
+		Delete: "/ip/vrf/remove",
+	}[action]
 }
 
 // FindRoutingTable finds a routing table by name
@@ -75,7 +90,7 @@ func (client Mikrotik) FindRoutingTable(name string) (*RoutingTable, error) {
 	}
 
 	table := &RoutingTable{}
-	err = Unmarshal(*reply.Re[0], table)
+	err = Unmarshal(reply.Re[0], table)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +165,7 @@ func (client Mikrotik) FindRoutingRule(id string) (*RoutingRule, error) {
 	}
 
 	rule := &RoutingRule{}
-	err = Unmarshal(*reply.Re[0], rule)
+	err = Unmarshal(reply.Re[0], rule)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +236,7 @@ func (client Mikrotik) FindVRF(name string) (*VRF, error) {
 	}
 
 	vrf := &VRF{}
-	err = Unmarshal(*reply.Re[0], vrf)
+	err = Unmarshal(reply.Re[0], vrf)
 	if err != nil {
 		return nil, err
 	}
