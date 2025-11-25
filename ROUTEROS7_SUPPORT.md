@@ -8,7 +8,7 @@ This provider has been updated to fully support RouterOS 7.x with new resources 
 
 ### Updated Dependencies
 
-- **go-routeros**: Updated from v0.0.0-20210123142807 to v3.3.0
+- **go-routeros**: Updated from v0.0.0-20210123142807 to v3.0.1 (latest)
   - Better RouterOS 7 API compatibility
   - Improved error handling
   - Performance improvements
