@@ -8,7 +8,7 @@ Uporządkowany system CI/CD dla Terraform Provider MikroTik.
 **Trigger**: Push/PR do `master`/`main`
 
 Podstawowy workflow budowania i testowania:
-- ✅ Budowanie dla Go 1.22, 1.23, 1.24
+- ✅ Budowanie dla Go 1.22, 1.23
 - ✅ Weryfikacja zależności (`go mod verify`)
 - ✅ Linting (`go vet`, `golangci-lint`)
 - ✅ Testy jednostkowe (`go test -short`)
@@ -147,8 +147,8 @@ GH_PAT: "ghp_..." # opcjonalny
 
 ### Wersje Go:
 - **Minimum**: 1.22
-- **Recommended**: 1.24
-- **CI Matrix**: 1.22, 1.23, 1.24
+- **Recommended**: 1.23
+- **CI Matrix**: 1.22, 1.23
 
 ## 📝 Uwagi
 

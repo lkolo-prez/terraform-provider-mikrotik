@@ -3,6 +3,9 @@ package utils
 import (
 	"regexp"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // ToSnakeCase converts in string to snake_case
@@ -42,7 +45,8 @@ func PascalCase(s string) string {
 	r := regexp.MustCompile(`[^0-9a-zA-Z-]+`)
 	rClean := regexp.MustCompile(`[^0-9a-zA-Z]+`)
 	s = string(r.ReplaceAll([]byte(s), []byte("-")))
-	s = strings.Title(s)
+	caser := cases.Title(language.English)
+	s = caser.String(s)
 
 	return string(rClean.ReplaceAll([]byte(s), []byte("")))
 }
