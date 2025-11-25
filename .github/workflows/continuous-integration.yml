@@ -1,4 +1,5 @@
 name: Continuous Integration
+
 on:
   push:
     branches:
@@ -8,26 +9,31 @@ on:
     branches:
       - master
       - main
+
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
-  # Phase 1: Basic build and syntax check (no RouterOS needed)
-  build:
-    name: Build & Lint
-    runs-on: ${{ matrix.os }}
+  build-and-test:
+    name: Build & Test (Go ${{ matrix.go }})
+    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        go: ["1.21", "1.22", "1.23"]
-        os: [ubuntu-latest]
+        go: ["1.22", "1.23", "1.24"]
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
+          cache: true
 
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      - name: Get dependencies
+      - name: Verify dependencies
         run: |
           go mod download
           go mod verify
@@ -35,87 +41,34 @@ jobs:
       - name: Build provider
         run: go build -v .
 
-      - name: Run linters
-        run: |
-          go vet ./client/...
-          go vet ./mikrotik/...
-          
-      - name: Run unit tests (no RouterOS)
-        run: |
-          cd client
-          go test -v -race -short ./...
-        continue-on-error: true  # Some tests require RouterOS connection
+      - name: Run go vet
+        run: go vet ./...
 
-  # Phase 2: Integration tests with RouterOS (optional, can be enabled later)
-  integration-test:
-    name: Integration - RouterOS ${{ matrix.routeros }}
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    strategy:
-      fail-fast: false
-      matrix:
-        go: ["1.22"]
-        routeros: ["7.14.3", "7.16.2"]
+      - name: Run unit tests
+        run: go test -v -race -short -timeout 5m ./...
 
-    steps:
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: ${{ matrix.go }}
-
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      - name: Get dependencies
-        run: go mod download
-
-      - name: Build provider
-        run: go build -v .
-
-      - name: Start RouterOS container
-        run: |
-          docker run -d --name routeros \
-            --cap-add=NET_ADMIN \
-            --device=/dev/net/tun \
-            -p 8728:8728 \
-            -p 8080:80 \
-            mnazarenko/docker-routeros:${{ matrix.routeros }} || true
-
-      - name: Wait for RouterOS
-        run: |
-          echo "Waiting for RouterOS to start..."
-          for i in {1..60}; do
-            if curl -s --connect-timeout 1 http://127.0.0.1:8080 > /dev/null 2>&1; then
-              echo "RouterOS is ready!"
-              exit 0
-            fi
-            echo -n "."
-            sleep 2
-          done
-          echo "RouterOS failed to start"
-          docker logs routeros || true
-          exit 1
-
-      - name: Run integration tests
-        run: |
-          cd client
-          go test -v -timeout 30m ./...
-        env:
-          MIKROTIK_HOST: 127.0.0.1:8728
-          MIKROTIK_USER: admin
-          MIKROTIK_PASSWORD: ''
-          TF_ACC: 1
+      - name: Run client tests
+        working-directory: client
+        run: go test -v -race -short -timeout 5m ./...
         continue-on-error: true
 
-      - name: Collect logs on failure
-        if: failure()
-        run: |
-          docker logs routeros > routeros.log 2>&1 || true
-          cat routeros.log
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Cleanup
-        if: always()
-        run: |
-          docker stop routeros || true
-          docker rm routeros || true
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+        continue-on-error: true

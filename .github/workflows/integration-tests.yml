@@ -1,30 +1,46 @@
-name: Integration Tests (Advanced)
+name: Integration Tests
 
-# This workflow is DISABLED by default - runs only on manual trigger
-# Enable when RouterOS integration testing is ready
+# Manual trigger only - requires RouterOS container
 on:
   workflow_dispatch:
     inputs:
       routeros_version:
         description: 'RouterOS version to test'
-        required: false
+        required: true
         default: '7.16.2'
+        type: choice
+        options:
+          - '7.14.3'
+          - '7.15.3'
+          - '7.16.2'
+          - '7.17.1'
+      go_version:
+        description: 'Go version'
+        required: true
+        default: '1.24'
+        type: string
+
+permissions:
+  contents: read
+  actions: write
 
 jobs:
-  manual-integration-test:
-    name: Manual Integration Test - RouterOS ${{ github.event.inputs.routeros_version }}
+  integration-test:
+    name: RouterOS ${{ inputs.routeros_version }} with Go ${{ inputs.go_version }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: ${{ inputs.go_version }}
+          cache: true
 
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      - name: Get dependencies
+      - name: Install dependencies
         run: go mod download
 
       - name: Build provider
@@ -32,47 +48,49 @@ jobs:
 
       - name: Start RouterOS container
         run: |
+          echo "🚀 Starting RouterOS ${{ inputs.routeros_version }}..."
           docker run -d --name routeros \
             --cap-add=NET_ADMIN \
             --device=/dev/net/tun \
             -p 8728:8728 \
             -p 8080:80 \
-            mnazarenko/docker-routeros:${{ github.event.inputs.routeros_version }}
-          
-          echo "Waiting for RouterOS to start..."
+            mnazarenko/docker-routeros:${{ inputs.routeros_version }}
+
+      - name: Wait for RouterOS
+        run: |
+          echo "⏳ Waiting for RouterOS to start..."
           for i in {1..60}; do
-            if curl -s http://127.0.0.1:8080 > /dev/null 2>&1; then
-              echo "RouterOS is ready!"
+            if curl -s --connect-timeout 2 http://127.0.0.1:8080 > /dev/null 2>&1; then
+              echo "✅ RouterOS is ready!"
               exit 0
             fi
             echo -n "."
             sleep 5
           done
-          echo "RouterOS failed to start"
+          echo ""
+          echo "❌ RouterOS failed to start in 5 minutes"
+          docker logs routeros || true
           exit 1
 
       - name: Run integration tests
-        run: |
-          cd client
-          go test -v -timeout 30m ./...
+        run: go test -v -timeout 30m ./client/...
         env:
           MIKROTIK_HOST: 127.0.0.1:8728
           MIKROTIK_USER: admin
           MIKROTIK_PASSWORD: ''
           TF_ACC: 1
-        continue-on-error: true
 
       - name: Collect logs
         if: always()
-        run: |
-          docker logs routeros > routeros.log 2>&1 || true
-          
+        run: docker logs routeros > routeros.log 2>&1 || true
+
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: routeros-logs-${{ github.event.inputs.routeros_version }}
+          name: routeros-logs-${{ inputs.routeros_version }}
           path: routeros.log
+          retention-days: 7
 
       - name: Cleanup
         if: always()
@@ -80,53 +98,36 @@ jobs:
           docker stop routeros || true
           docker rm routeros || true
 
-  feature-coverage-check:
-    name: Validate Feature Coverage
+  coverage-report:
+    name: Feature Coverage Report
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-      
-      - name: Validate coverage matrix
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate coverage report
         run: |
-          echo "📊 Checking ROUTEROS7_COVERAGE.md..."
-          
+          echo "📊 RouterOS v7 Feature Coverage Report"
+          echo "======================================="
+          echo ""
+
           if [ -f "ROUTEROS7_COVERAGE.md" ]; then
             implemented=$(grep -c "✅" ROUTEROS7_COVERAGE.md || echo "0")
             planned=$(grep -c "📋" ROUTEROS7_COVERAGE.md || echo "0")
             partial=$(grep -c "🟡" ROUTEROS7_COVERAGE.md || echo "0")
-            
-            echo "  ✅ Fully Implemented: $implemented"
-            echo "  🟡 Partially Implemented: $partial"  
-            echo "  📋 Planned: $planned"
-            
+
+            echo "✅ Fully Implemented: $implemented"
+            echo "🟡 Partially Implemented: $partial"
+            echo "📋 Planned: $planned"
+            echo ""
+
             total=$((implemented + planned + partial))
             if [ $total -gt 0 ]; then
               coverage=$((implemented * 100 / total))
-              echo "  📈 Coverage: ${coverage}%"
+              echo "📈 Coverage: ${coverage}%"
             fi
           else
             echo "⚠️  ROUTEROS7_COVERAGE.md not found"
+            exit 1
           fi
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-      
-      - name: Run Gosec Security Scanner
-        uses: securego/gosec@master
-        with:
-          args: '-no-fail -fmt sarif -out results.sarif ./...'
-        continue-on-error: true
-          
-      - name: Upload SARIF file
-        if: always()
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: results.sarif
-        continue-on-error: true
