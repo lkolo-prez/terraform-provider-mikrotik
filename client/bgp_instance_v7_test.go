@@ -51,7 +51,7 @@ func TestAddAndUpdateBgpInstanceV7WithOptionalFieldsAndDeleteBgpInstanceV7(t *te
 		RouterID:              routerID,
 		RedistributeConnected: false,
 		RedistributeStatic:    false,
-		RedistributeOSPF:      false,
+		RedistributeOspf:      false,
 		Comment:               "Initial config",
 	}
 
