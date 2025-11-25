@@ -1,6 +1,6 @@
 module github.com/ddelnano/terraform-provider-mikrotik/client
 
-go 1.18
+go 1.21
 
 require (
 	github.com/go-routeros/routeros/v3 v3.0.1

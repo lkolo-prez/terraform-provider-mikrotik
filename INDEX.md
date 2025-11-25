@@ -121,9 +121,14 @@ cat README.md
 ### 4. Build the Provider
 
 ```bash
+# Requires Go 1.21+ for log/slog support
 go mod tidy
 go build -o terraform-provider-mikrotik.exe
 ```
+
+**Requirements:**
+- Go 1.21 or higher
+- RouterOS 7.14.3+
 
 ---
 

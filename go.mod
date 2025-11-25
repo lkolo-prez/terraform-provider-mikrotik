@@ -1,6 +1,6 @@
 module github.com/ddelnano/terraform-provider-mikrotik
 
-go 1.18
+go 1.21
 
 require (
 	github.com/ddelnano/terraform-provider-mikrotik/client v0.0.0-00010101000000-000000000000

@@ -12,10 +12,12 @@ This provider has been updated to fully support RouterOS 7.x with new resources 
   - Better RouterOS 7 API compatibility
   - Improved error handling
   - Performance improvements
+  - **Requires Go 1.21+** (for `log/slog` support)
 
 ### CI/CD Updates
 
-- Test matrix now includes RouterOS 7.14.3 and 7.16.2
+- **Go version**: Updated from 1.18 to 1.21-1.23
+- Test matrix now includes RouterOS 7.14.3, 7.16.2, 7.17
 - Removed RouterOS 6.x testing (legacy support)
 - All tests run against RouterOS 7.x by default
 
