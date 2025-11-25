@@ -40,6 +40,7 @@ Welcome to the **terraform-provider-mikrotik** documentation for RouterOS 7 supp
 | Document | Description |
 |----------|-------------|
 | [README.md](./README.md) | Main repository README |
+| [LOCAL_TESTING.md](./LOCAL_TESTING.md) | Local testing guide (build, lint, integration) |
 | [client/](./client/) | Go client library source code |
 
 ---
