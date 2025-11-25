@@ -2,11 +2,15 @@ terraform-provider-mikrotik
 dist/
 vendor
 .vscode/
+.idea/
 
 # GPG keys - NEVER commit these!
 *.asc
 private-key.*
 public-key.*
+.gpg-id
+key
+lock
 
 # Binaries
 *.exe

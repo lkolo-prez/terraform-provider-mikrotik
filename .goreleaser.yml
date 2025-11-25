@@ -35,17 +35,16 @@ builds:
       - arm64
       - arm
       - '386'
+    goarm:
+      - '6'
+      - '7'
     ignore:
       - goos: darwin
         goarch: '386'
       - goos: darwin
         goarch: arm
       - goos: windows
-        goarch: arm
-      - goos: windows
         goarch: arm64
-      - goos: freebsd
-        goarch: arm
       - goos: freebsd
         goarch: arm64
 
@@ -54,9 +53,8 @@ archives:
     format: zip
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
     files:
-      - LICENSE
-      - README.md
-      - CHANGELOG.md
+      - none*  # Only include the binary, no additional files
+    wrap_in_directory: false
 
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
@@ -73,6 +71,10 @@ signs:
       - "${signature}"
       - "--detach-sign"
       - "${artifact}"
+
+# Terraform Registry metadata
+metadata:
+  mod_timestamp: '{{ .CommitTimestamp }}'
 
 release:
   github:
