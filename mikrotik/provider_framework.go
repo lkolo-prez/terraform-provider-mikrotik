@@ -178,12 +178,15 @@ func (p *ProviderFramework) Configure(ctx context.Context, req provider.Configur
 }
 
 func (p *ProviderFramework) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewBgpSessionDataSource,
+	}
 }
 
 func (p *ProviderFramework) Resources(ctx context.Context) []func() resource.Resource {
 	return defaultaware.WrapResources([]func() resource.Resource{
 		NewBgpInstanceResource,
+		NewBgpInstanceV7Resource,
 		NewBgpPeerResource,
 		NewBridgePortResource,
 		NewBridgeResource,

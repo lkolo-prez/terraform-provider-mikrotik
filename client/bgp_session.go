@@ -106,13 +106,10 @@ func (client Mikrotik) ListBgpSessions() ([]*BgpSession, error) {
 		return nil, err
 	}
 
-	sessions := make([]*BgpSession, 0, len(reply.Re))
-	for _, re := range reply.Re {
-		session := &BgpSession{}
-		if err := Unmarshal(re, session); err != nil {
-			return nil, err
-		}
-		sessions = append(sessions, session)
+	sessions := make([]*BgpSession, 0)
+	err = Unmarshal(*reply, &sessions)
+	if err != nil {
+		return nil, err
 	}
 
 	return sessions, nil
