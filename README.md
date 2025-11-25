@@ -4,6 +4,21 @@
 
 This is a terraform provider for managing resources on your RouterOS device. To see what resources and data sources are supported, please see the [documentation](https://registry.terraform.io/providers/ddelnano/mikrotik/latest/docs) on the terraform registry.
 
+## RouterOS 7 Support
+
+✅ **Full RouterOS 7.x support is now available!**
+
+This provider has been updated to work with MikroTik RouterOS 7.x, including:
+- New BGP implementation (`/routing/bgp/connection` and `/routing/bgp/template`)
+- Firewall RAW table for pre-connection tracking
+- Enhanced VLAN support with hardware acceleration
+- Improved WireGuard integration
+- All modern RouterOS 7 features
+
+**Migration Guide**: See [MIGRATION_ROUTEROS7.md](./MIGRATION_ROUTEROS7.md) for upgrading from RouterOS 6.x
+
+**What's New**: See [ROUTEROS7_SUPPORT.md](./ROUTEROS7_SUPPORT.md) for detailed information about RouterOS 7 features
+
 ## Support
 
 You can discuss any issues you have or feature requests in [Discord](https://discord.gg/ZpNq8ez).

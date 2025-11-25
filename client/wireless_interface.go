@@ -1,6 +1,6 @@
 package client
 
-import "github.com/go-routeros/routeros"
+import "github.com/go-routeros/routeros/v3"
 
 const (
 	WirelessInterfaceModeStation                   = "station"

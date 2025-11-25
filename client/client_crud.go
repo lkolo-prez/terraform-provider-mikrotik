@@ -5,7 +5,7 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/go-routeros/routeros"
+	"github.com/go-routeros/routeros/v3"
 )
 
 const (

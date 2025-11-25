@@ -3,7 +3,7 @@ module github.com/ddelnano/terraform-provider-mikrotik/client
 go 1.18
 
 require (
-	github.com/go-routeros/routeros v0.0.0-20210123142807-2a44d57c6730
+	github.com/go-routeros/routeros/v3 v3.3.0
 	github.com/stretchr/testify v1.8.0
 )
 

@@ -3,7 +3,7 @@ package client
 import (
 	"log"
 
-	"github.com/go-routeros/routeros"
+	"github.com/go-routeros/routeros/v3"
 )
 
 type DhcpLease struct {

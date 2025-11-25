@@ -2,7 +2,7 @@ package client
 
 import (
 	"github.com/ddelnano/terraform-provider-mikrotik/client/types"
-	"github.com/go-routeros/routeros"
+	"github.com/go-routeros/routeros/v3"
 )
 
 // FirewallFilterRule defines /ip/firewall/filter rule

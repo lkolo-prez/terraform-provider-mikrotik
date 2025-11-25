@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/go-routeros/routeros"
+	"github.com/go-routeros/routeros/v3"
 )
 
 // BridgePort defines port-in-bridge association

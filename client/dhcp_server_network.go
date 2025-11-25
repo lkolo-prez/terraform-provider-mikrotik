@@ -1,6 +1,6 @@
 package client
 
-import "github.com/go-routeros/routeros"
+import "github.com/go-routeros/routeros/v3"
 
 // DhcpServerNetwork describes network configuration for DHCP server
 type DhcpServerNetwork struct {

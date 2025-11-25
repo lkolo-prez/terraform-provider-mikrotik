@@ -3,7 +3,7 @@ package client
 import (
 	"strings"
 
-	"github.com/go-routeros/routeros"
+	"github.com/go-routeros/routeros/v3"
 )
 
 type LegacyBgpUnsupported struct{}
