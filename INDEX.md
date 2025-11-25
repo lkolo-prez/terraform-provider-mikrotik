@@ -26,6 +26,7 @@ Welcome to the **terraform-provider-mikrotik** documentation for RouterOS 7 supp
 | [ROUTEROS7_COVERAGE.md](./ROUTEROS7_COVERAGE.md) | Feature coverage matrix (83 features tracked) | Planners & developers |
 | [ROUTEROS7_SUPPORT.md](./ROUTEROS7_SUPPORT.md) | New RouterOS 7 resource documentation | Users |
 | [MIGRATION_ROUTEROS7.md](./MIGRATION_ROUTEROS7.md) | RouterOS 6 to 7 migration guide | Migrating users |
+| [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) | Development roadmap & planning (Phase 1→10) | Contributors & planners |
 
 ### Examples
 

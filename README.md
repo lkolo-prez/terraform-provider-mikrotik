@@ -19,6 +19,12 @@ This provider has been updated to work with MikroTik RouterOS 7.x, including:
 
 **What's New**: See [ROUTEROS7_SUPPORT.md](./ROUTEROS7_SUPPORT.md) for detailed information about RouterOS 7 features
 
+**Documentation Index**: See [INDEX.md](./INDEX.md) for complete documentation overview
+
+**RouterOS 7 Cheat Sheet**: See [ROUTEROS7_CHEATSHEET.md](./ROUTEROS7_CHEATSHEET.md) for command reference
+
+**Feature Coverage**: See [ROUTEROS7_COVERAGE.md](./ROUTEROS7_COVERAGE.md) for implementation status
+
 ## Support
 
 You can discuss any issues you have or feature requests in [Discord](https://discord.gg/ZpNq8ez).
@@ -30,7 +36,7 @@ If you get value out this project and want to show your support you can find me 
 ## Building provider locally
 
 Requirements:
-* [Go](https://go.dev/doc/install) >= 1.18
+* [Go](https://go.dev/doc/install) >= 1.21 (required for `log/slog` support)
 * [Terraform]() >= 0.14
 
 To build the provider with `make`:

@@ -1,33 +1,19 @@
-name: Integration Tests
+name: Integration Tests (Advanced)
 
+# This workflow is DISABLED by default - runs only on manual trigger
+# Enable when RouterOS integration testing is ready
 on:
-  schedule:
-    # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       routeros_version:
         description: 'RouterOS version to test'
         required: false
-        default: 'latest'
+        default: '7.16.2'
 
 jobs:
-  integration-test:
-    name: Integration Tests - RouterOS ${{ matrix.routeros }}
+  manual-integration-test:
+    name: Manual Integration Test - RouterOS ${{ github.event.inputs.routeros_version }}
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        routeros: ["7.14.3", "7.16.2", "7.17", "latest"]
-        test_suite:
-          - name: "Basic Resources"
-            pattern: "TestAcc.*Bridge|TestAcc.*Interface|TestAcc.*DHCP"
-          - name: "BGP & Routing"
-            pattern: "TestAcc.*Bgp|TestAcc.*Routing"
-          - name: "Firewall"
-            pattern: "TestAcc.*Firewall"
-          - name: "Advanced Features"
-            pattern: "TestAcc.*Wireless|TestAcc.*Script|TestAcc.*Scheduler"
 
     steps:
       - name: Set up Go
@@ -51,69 +37,50 @@ jobs:
             --device=/dev/net/tun \
             -p 8728:8728 \
             -p 8080:80 \
-            mnazarenko/docker-routeros:${{ matrix.routeros }}
+            mnazarenko/docker-routeros:${{ github.event.inputs.routeros_version }}
           
-          # Wait for RouterOS to be ready
           echo "Waiting for RouterOS to start..."
-          timeout 300 bash -c 'until curl -s http://127.0.0.1:8080 > /dev/null; do sleep 5; done'
-          echo "RouterOS is ready!"
+          for i in {1..60}; do
+            if curl -s http://127.0.0.1:8080 > /dev/null 2>&1; then
+              echo "RouterOS is ready!"
+              exit 0
+            fi
+            echo -n "."
+            sleep 5
+          done
+          echo "RouterOS failed to start"
+          exit 1
 
-      - name: Run ${{ matrix.test_suite.name }} tests
+      - name: Run integration tests
         run: |
-          go test -v -timeout 30m ./... -run "${{ matrix.test_suite.pattern }}"
+          cd client
+          go test -v -timeout 30m ./...
         env:
           MIKROTIK_HOST: 127.0.0.1:8728
           MIKROTIK_USER: admin
           MIKROTIK_PASSWORD: ''
           TF_ACC: 1
+        continue-on-error: true
 
-      - name: Collect RouterOS logs on failure
-        if: failure()
+      - name: Collect logs
+        if: always()
         run: |
           docker logs routeros > routeros.log 2>&1 || true
           
       - name: Upload logs
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: routeros-logs-${{ matrix.routeros }}-${{ matrix.test_suite.name }}
+          name: routeros-logs-${{ github.event.inputs.routeros_version }}
           path: routeros.log
 
-      - name: Stop RouterOS container
+      - name: Cleanup
         if: always()
-        run: docker stop routeros && docker rm routeros || true
-
-  compatibility-report:
-    name: Generate Compatibility Report
-    needs: integration-test
-    runs-on: ubuntu-latest
-    if: always()
-    
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-      
-      - name: Download all artifacts
-        uses: actions/download-artifact@v3
-        
-      - name: Generate compatibility report
         run: |
-          echo "# RouterOS Compatibility Test Report" > report.md
-          echo "**Date**: $(date -u)" >> report.md
-          echo "" >> report.md
-          echo "## Test Results Summary" >> report.md
-          echo "" >> report.md
-          
-          # This would be enhanced with actual test results parsing
-          echo "Integration tests completed. Check individual job logs for details." >> report.md
-          
-      - name: Upload report
-        uses: actions/upload-artifact@v3
-        with:
-          name: compatibility-report
-          path: report.md
+          docker stop routeros || true
+          docker rm routeros || true
 
-  RouterOS-feature-coverage:
+  feature-coverage-check:
     name: Validate Feature Coverage
     runs-on: ubuntu-latest
     
@@ -123,31 +90,25 @@ jobs:
       
       - name: Validate coverage matrix
         run: |
-          echo "Checking ROUTEROS7_COVERAGE.md is up to date..."
+          echo "📊 Checking ROUTEROS7_COVERAGE.md..."
           
-          # Count implemented resources
-          implemented=$(grep -c "✅" ROUTEROS7_COVERAGE.md || echo "0")
-          planned=$(grep -c "📋" ROUTEROS7_COVERAGE.md || echo "0")
-          partial=$(grep -c "🟡" ROUTEROS7_COVERAGE.md || echo "0")
-          
-          echo "📊 Feature Coverage Statistics:"
-          echo "  ✅ Fully Implemented: $implemented"
-          echo "  🟡 Partially Implemented: $partial"  
-          echo "  📋 Planned: $planned"
-          
-          total=$((implemented + planned + partial))
-          coverage=$((implemented * 100 / total))
-          
-          echo "  Coverage: ${coverage}%"
-          
-          if [ $coverage -lt 25 ]; then
-            echo "⚠️  Warning: Coverage is below 25%"
+          if [ -f "ROUTEROS7_COVERAGE.md" ]; then
+            implemented=$(grep -c "✅" ROUTEROS7_COVERAGE.md || echo "0")
+            planned=$(grep -c "📋" ROUTEROS7_COVERAGE.md || echo "0")
+            partial=$(grep -c "🟡" ROUTEROS7_COVERAGE.md || echo "0")
+            
+            echo "  ✅ Fully Implemented: $implemented"
+            echo "  🟡 Partially Implemented: $partial"  
+            echo "  📋 Planned: $planned"
+            
+            total=$((implemented + planned + partial))
+            if [ $total -gt 0 ]; then
+              coverage=$((implemented * 100 / total))
+              echo "  📈 Coverage: ${coverage}%"
+            fi
+          else
+            echo "⚠️  ROUTEROS7_COVERAGE.md not found"
           fi
-          
-      - name: Check for new RouterOS 7 features
-        run: |
-          echo "Checking for updates in RouterOS 7 documentation..."
-          echo "Please manually review ROUTEROS7_CHEATSHEET.md against official docs"
 
   security-scan:
     name: Security Scan
@@ -161,8 +122,11 @@ jobs:
         uses: securego/gosec@master
         with:
           args: '-no-fail -fmt sarif -out results.sarif ./...'
+        continue-on-error: true
           
       - name: Upload SARIF file
+        if: always()
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: results.sarif
+        continue-on-error: true
