@@ -49,3 +49,12 @@ jobs:
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Terraform Registry Manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          MANIFEST_NAME="terraform-provider-mikrotik_${TAG_NAME}_manifest.json"
+          cp terraform-registry-manifest.json "${MANIFEST_NAME}"
+          gh release upload "${TAG_NAME}" "${MANIFEST_NAME}" --clobber

@@ -88,13 +88,13 @@ release:
     
     ### Installation
     
-    This provider is published to the [Terraform Registry](https://registry.terraform.io/providers/ddelnano/mikrotik/latest).
+    This provider is published to the [Terraform Registry](https://registry.terraform.io/providers/lkolo-prez/mikrotik/latest).
     
     ```hcl
     terraform {
       required_providers {
         mikrotik = {
-          source  = "ddelnano/mikrotik"
+          source  = "lkolo-prez/mikrotik"
           version = "~> {{ .Version }}"
         }
       }
