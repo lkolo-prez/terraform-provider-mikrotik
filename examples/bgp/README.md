@@ -87,6 +87,42 @@ Customer A Site 1                   Customer A Site 2
 
 ---
 
+### 05-communities-filtering.tf
+**BGP Communities and Advanced Filtering**
+
+- ISP-customer connection with community tagging
+- Route classification (standard, backup, premium)
+- Input/output community filtering
+- Template-based customer configuration
+- Rate limiting for customer prefixes
+
+**Use case:** ISP traffic engineering, customer route management, policy-based routing
+
+**Community values:**
+- `65400:100` - Standard customer routes
+- `65400:200` - Backup routes (lower priority)
+- `65400:300` - Premium routes (higher priority)
+
+---
+
+### 06-graceful-restart.tf
+**High Availability with Graceful Restart and BFD**
+
+- Two core routers with HA configuration
+- BGP Graceful Restart capability
+- BFD for sub-second failure detection
+- Preserves forwarding state during restarts
+- Reduced timers for faster convergence
+
+**Use case:** High-availability core networks, zero-downtime maintenance
+
+**Features:**
+- **Graceful Restart:** 120s restart time, 300s stale routes
+- **BFD:** Sub-second link failure detection
+- **Fast Convergence:** 90s hold time, 30s keepalive
+
+---
+
 ## Quick Start
 
 1. **Clone the repository:**
@@ -374,6 +410,8 @@ resource "mikrotik_bgp_connection" "new" {
 - Must specify `connect = true` or `listen = true`
 - More granular control over address families
 - Native VRF support
+
+**📖 Complete Migration Guide:** See [MIGRATION.md](./MIGRATION.md) for step-by-step migration instructions, troubleshooting, and common patterns.
 
 ---
 

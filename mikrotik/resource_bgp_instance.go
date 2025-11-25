@@ -16,6 +16,10 @@ import (
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// Deprecated: BGP Instance (v6) is deprecated in RouterOS 7.x.
+// Use mikrotik_bgp_instance_v7 for RouterOS 7.20+ which provides the new BGP implementation
+// with support for templates, VRF, MPLS, and improved routing filter integration.
+// This resource is maintained for backward compatibility with RouterOS 6.x only.
 type bgpInstance struct {
 	client *client.Mikrotik
 }
@@ -28,6 +32,7 @@ var (
 )
 
 // NewBgpInstanceResource is a helper function to simplify the provider implementation.
+// Deprecated: Use NewBgpInstanceV7Resource() for RouterOS 7.20+
 func NewBgpInstanceResource() resource.Resource {
 	return &bgpInstance{}
 }
@@ -48,7 +53,10 @@ func (r *bgpInstance) Metadata(_ context.Context, req resource.MetadataRequest, 
 // Schema defines the schema for the resource.
 func (s *bgpInstance) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Creates a Mikrotik BGP Instance.",
+		Description: "Creates a Mikrotik BGP Instance. **DEPRECATED**: Use `mikrotik_bgp_instance_v7` for RouterOS 7.20+. " +
+			"This resource is maintained for backward compatibility with RouterOS 6.x only. " +
+			"The new BGP v7 implementation provides templates, VRF support, MPLS, and improved routing filters.",
+		DeprecationMessage: "Use mikrotik_bgp_instance_v7 for RouterOS 7.20+. This resource will be removed in a future version.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{

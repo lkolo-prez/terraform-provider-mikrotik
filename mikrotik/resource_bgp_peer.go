@@ -14,6 +14,10 @@ import (
 	tftypes "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// Deprecated: BGP Peer (v6) is deprecated in RouterOS 7.x.
+// Use mikrotik_bgp_connection for RouterOS 7.20+ which provides the new BGP implementation
+// with support for templates, connection modes (listen/connect), VRF, MPLS, and BFD integration.
+// This resource is maintained for backward compatibility with RouterOS 6.x only.
 type bgpPeer struct {
 	client *client.Mikrotik
 }
@@ -26,6 +30,7 @@ var (
 )
 
 // NewBgpPeerResource is a helper function to simplify the provider implementation.
+// Deprecated: Use NewBgpConnectionResource() for RouterOS 7.20+
 func NewBgpPeerResource() resource.Resource {
 	return &bgpPeer{}
 }
@@ -46,7 +51,10 @@ func (r *bgpPeer) Metadata(_ context.Context, req resource.MetadataRequest, resp
 // Schema defines the schema for the resource.
 func (s *bgpPeer) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Creates a MikroTik BGP Peer.",
+		Description: "Creates a MikroTik BGP Peer. **DEPRECATED**: Use `mikrotik_bgp_connection` for RouterOS 7.20+. " +
+			"This resource is maintained for backward compatibility with RouterOS 6.x only. " +
+			"The new BGP v7 implementation provides templates, connection modes, VRF support, and BFD integration.",
+		DeprecationMessage: "Use mikrotik_bgp_connection for RouterOS 7.20+. This resource will be removed in a future version.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
