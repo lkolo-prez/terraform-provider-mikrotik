@@ -83,7 +83,7 @@ release:
     name: terraform-provider-mikrotik
   draft: false
   prerelease: auto
-  mode: replace
+  make_latest: true
   header: |
     ## Terraform Provider for MikroTik RouterOS {{ .Tag }}
     
