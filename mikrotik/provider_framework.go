@@ -185,9 +185,11 @@ func (p *ProviderFramework) DataSources(ctx context.Context) []func() datasource
 
 func (p *ProviderFramework) Resources(ctx context.Context) []func() resource.Resource {
 	return defaultaware.WrapResources([]func() resource.Resource{
+		NewBgpConnectionResource,
 		NewBgpInstanceResource,
 		NewBgpInstanceV7Resource,
 		NewBgpPeerResource,
+		NewBgpTemplateResource,
 		NewBridgePortResource,
 		NewBridgeResource,
 		NewBridgeVlanResource,
