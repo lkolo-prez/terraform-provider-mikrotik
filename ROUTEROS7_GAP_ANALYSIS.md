@@ -1,28 +1,22 @@
 # RouterOS 7 Coverage Gap Analysis
-**Document Version:** 1.0  
-**Date:** December 2024  
-**Provider:** terraform-provider-mikrotik  
-**Repository:** https://github.com/lkolo-prez/terraform-provider-mikrotik
+
+**Current Status:** 27/84 features (32%) fully implemented
 
 ---
 
-## Executive Summary
+## Summary
 
-This document provides a comprehensive analysis of missing RouterOS v7 features in the Terraform provider. Based on the current implementation status documented in `ROUTEROS7_COVERAGE.md`, we have:
-
-- ✅ **27 Fully Implemented** features (32%)
-- 🟡 **15 Partially Implemented** features (18%)
-- 📋 **31 Planned** features (37%)
-- ❌ **10 Not Planned** features (12%)
-- ⚠️ **1 Deprecated** feature (1%)
-
-**Total:** 84 tracked features
-
-**Recent Milestone:** BGP v7 complete implementation (4 resources, 133 attributes total)
+| Priority | Features | Time Estimate |
+|----------|----------|---------------|
+| P0 (Critical) | 4 | 8-10 weeks |
+| P1 (High) | 5 | 4-5 weeks |
+| P2 (Medium) | 3 | 2-3 weeks |
+| P3 (Low) | 10+ | 4-5 weeks |
+| **Total** | **22+** | **18-23 weeks** |
 
 ---
 
-## Priority 1: Critical Missing Features (P0)
+## P0: Critical Missing Features
 
 ### 1.1 Routing Infrastructure
 
@@ -522,177 +516,28 @@ Power consumption monitoring.
 
 ---
 
-## Summary Roadmap
+## Roadmap
 
-### Phase 1: Critical Foundation (Q1 2025)
-**Estimated Time:** 6-8 weeks
+### Q1 2025: Foundation (6-8 weeks)
+1. Routing Table/VRF (2 weeks)
+2. Routing Filter (3 weeks)
+3. OSPF v3 Redesign (3 weeks)
 
-1. **Routing Table/VRF** (P0) - 2 weeks
-   - Foundation for BGP VRF, OSPF multi-instance
-   - Blocking other features
+### Q2 2025: Infrastructure (4-6 weeks)
+1. WiFi System (4 weeks)
+2. Container Support (2 weeks)
 
-2. **Routing Filter** (P0) - 3 weeks
-   - Essential for production BGP/OSPF deployments
-   - Complex implementation
+### Q3 2025: Enhancements (3-4 weeks)
+1. Queue Types, ZeroTier, VXLAN
+2. Service updates
 
-3. **OSPF v3 Redesign** (P0) - 3 weeks
-   - High demand, depends on routing filter
+### Q4 2025: Completeness (2-3 weeks)
+1. VPN VRF support
+2. Remaining features
 
-**Deliverables:**
-- 3 major resource groups (8+ resources)
-- ~125 total attributes
-- Full test coverage
-- Production examples
-
----
-
-### Phase 2: Modern Infrastructure (Q2 2025)
-**Estimated Time:** 4-6 weeks
-
-1. **WiFi System** (P0) - 4 weeks
-   - 6 resources, ~120 attributes
-   - Requires physical hardware for testing
-
-2. **Container Support** (P1) - 2 weeks
-   - 4 resources, ~35 attributes
-   - Modern application hosting
-
-**Deliverables:**
-- 10 resources
-- ~155 attributes
-- Hardware testing lab for WiFi
-- Container registry integration
+**Target:** 80%+ coverage by Q4 2025
 
 ---
 
-### Phase 3: Enhancement & Polish (Q3 2025)
-**Estimated Time:** 3-4 weeks
-
-1. **Queue Types** (P2) - 1 week
-2. **ZeroTier** (P1) - 1 week
-3. **VXLAN** (P3) - 1 week
-4. **Service/Connection Tracking Updates** (P1) - 1 week
-
-**Deliverables:**
-- 5+ resource updates
-- ~50 new attributes
-- Complete QoS capabilities
-
----
-
-### Phase 4: Interface Completeness (Q4 2025)
-**Estimated Time:** 2-3 weeks
-
-1. **VPN Interface Updates** (P3) - 2 weeks
-   - L2TP, PPPoE, SSTP VRF support
-2. **Remaining P3 Features** - 1 week
-
-**Deliverables:**
-- Full VRF support across all interfaces
-- 100% RouterOS 7 core feature coverage
-
----
-
-## Estimated Total Effort
-
-| Priority | Features | Estimated Time |
-|----------|----------|----------------|
-| P0 (Critical) | 4 | 8-10 weeks |
-| P1 (High) | 5 | 4-5 weeks |
-| P2 (Medium) | 3 | 2-3 weeks |
-| P3 (Low) | 10+ | 4-5 weeks |
-| **Total** | **22+** | **18-23 weeks** |
-
-**Full-time equivalent:** 4-6 months  
-**Part-time (20h/week):** 8-12 months
-
----
-
-## Testing Requirements
-
-### Hardware Requirements
-- ✅ Basic RouterOS devices (CHR, hAP, RB5009) - **HAVE**
-- ⚠️ WiFi 6 capable devices (wAP ax, cAP ax) - **NEED**
-- ⚠️ Switch with hardware offloading - **OPTIONAL**
-
-### Software Requirements
-- ✅ RouterOS 7.14, 7.16, 7.17, 7.20+ - **HAVE**
-- ✅ Terraform 1.5+ - **HAVE**
-- ✅ Go 1.21, 1.22, 1.23 - **HAVE**
-- ⚠️ Docker registry for container tests - **NEED**
-- ⚠️ ZeroTier network for ZeroTier tests - **NEED**
-
-### Testing Lab Topology
-```
-                    ┌──────────────┐
-                    │   Internet   │
-                    └──────┬───────┘
-                           │
-                    ┌──────▼───────┐
-                    │  Core Router │
-                    │  (RB5009)    │
-                    └──┬────────┬──┘
-            ┌──────────┘        └──────────┐
-            │                               │
-     ┌──────▼───────┐              ┌───────▼──────┐
-     │  WiFi Router │              │  VPN Router  │
-     │  (wAP ax)    │              │  (CHR)       │
-     └──────────────┘              └──────────────┘
-```
-
----
-
-## Contribution Guidelines
-
-### For New Features
-
-1. **Research Phase:**
-   - Read MikroTik documentation thoroughly
-   - Test on RouterOS device manually
-   - Document all attributes and behaviors
-
-2. **Implementation Phase:**
-   - Create client struct in `client/`
-   - Create Terraform resource in `mikrotik/`
-   - Follow existing patterns (see BGP v7 implementation)
-
-3. **Testing Phase:**
-   - Unit tests in `client/*_test.go`
-   - Acceptance tests in `mikrotik/*_test.go`
-   - Minimum 3 test scenarios per resource
-
-4. **Documentation Phase:**
-   - Update ROUTEROS7_COVERAGE.md
-   - Create example in `examples/`
-   - Add inline code comments
-
-5. **Optimization Phase:**
-   - Add bulk fetch functions (List*)
-   - Consider caching for read-heavy operations
-   - Profile performance
-
----
-
-## Conclusion
-
-The Terraform provider has made significant progress with **32% of RouterOS 7 features fully implemented**. The recent BGP v7 implementation demonstrates the maturity of the provider architecture with:
-
-- ✅ 4 BGP resources (133 attributes total)
-- ✅ Comprehensive test coverage (20+ test cases)
-- ✅ Performance optimizations (90% API call reduction)
-- ✅ Production-ready examples
-
-**Immediate priorities:**
-1. Routing Filter (blocking production BGP deployments)
-2. Routing Table/VRF (blocking enterprise features)
-3. OSPF v7 (high demand)
-4. WiFi System (modern infrastructure)
-
-**Long-term goal:**  
-Achieve 80%+ coverage of RouterOS 7 core features by Q4 2025.
-
----
-
-**Document Maintained By:** Provider Development Team  
-**Last Updated:** December 2024  
-**Next Review:** March 2025
+**Repository:** https://github.com/lkolo-prez/terraform-provider-mikrotik  
+**Last Updated:** December 2024
