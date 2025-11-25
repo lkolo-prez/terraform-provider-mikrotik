@@ -160,7 +160,7 @@ func (client Mikrotik) FindInterfaceVeth(name string) (*InterfaceVeth, error) {
 	}
 
 	veth := &InterfaceVeth{}
-	err = Unmarshal(reply.Re[0], veth)
+	err = Unmarshal(*reply, veth)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func (client Mikrotik) FindQueueType(name string) (*QueueType, error) {
 	}
 
 	qt := &QueueType{}
-	err = Unmarshal(reply.Re[0], qt)
+	err = Unmarshal(*reply, qt)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"github.com/go-routeros/routeros/v3"
 )
 
 // RoutingTable represents RouterOS v7 routing table (VRF support)
@@ -90,7 +89,7 @@ func (client Mikrotik) FindRoutingTable(name string) (*RoutingTable, error) {
 	}
 
 	table := &RoutingTable{}
-	err = Unmarshal(reply.Re[0], table)
+	err = Unmarshal(*reply, table)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +105,7 @@ func (client Mikrotik) CreateRoutingTable(table *RoutingTable) (*RoutingTable, e
 	}
 
 	cmd := Marshal("/routing/table/add", table)
-	reply, err := c.RunArgs(cmd)
+	_, err = c.RunArgs(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +164,7 @@ func (client Mikrotik) FindRoutingRule(id string) (*RoutingRule, error) {
 	}
 
 	rule := &RoutingRule{}
-	err = Unmarshal(reply.Re[0], rule)
+	err = Unmarshal(*reply, rule)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +235,7 @@ func (client Mikrotik) FindVRF(name string) (*VRF, error) {
 	}
 
 	vrf := &VRF{}
-	err = Unmarshal(reply.Re[0], vrf)
+	err = Unmarshal(*reply, vrf)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +251,7 @@ func (client Mikrotik) CreateVRF(vrf *VRF) (*VRF, error) {
 	}
 
 	cmd := Marshal("/ip/vrf/add", vrf)
-	reply, err := c.RunArgs(cmd)
+	_, err = c.RunArgs(cmd)
 	if err != nil {
 		return nil, err
 	}
