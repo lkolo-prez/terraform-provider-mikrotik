@@ -139,6 +139,28 @@ func (c Mikrotik) FindBgpTemplate(name string) (*BgpTemplate, error) {
 	return res.(*BgpTemplate), nil
 }
 
+// ListBgpTemplates returns all BGP templates for bulk operations
+func (c Mikrotik) ListBgpTemplates() ([]*BgpTemplate, error) {
+	client, err := c.getMikrotikClient()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := []string{"/routing/bgp/template/print"}
+	reply, err := client.RunArgs(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	templates := make([]*BgpTemplate, 0)
+	err = Unmarshal(*reply, &templates)
+	if err != nil {
+		return nil, err
+	}
+
+	return templates, nil
+}
+
 func (c Mikrotik) DeleteBgpTemplate(name string) error {
 	return c.Delete(&BgpTemplate{Name: name})
 }

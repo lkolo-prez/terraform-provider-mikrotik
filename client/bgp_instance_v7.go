@@ -106,6 +106,28 @@ func (c Mikrotik) FindBgpInstanceV7(name string) (*BgpInstanceV7, error) {
 	return res.(*BgpInstanceV7), nil
 }
 
+// ListBgpInstancesV7 returns all BGP instances v7 for bulk operations
+func (c Mikrotik) ListBgpInstancesV7() ([]*BgpInstanceV7, error) {
+	client, err := c.getMikrotikClient()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := []string{"/routing/bgp/instance/print"}
+	reply, err := client.RunArgs(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	instances := make([]*BgpInstanceV7, 0)
+	err = Unmarshal(*reply, &instances)
+	if err != nil {
+		return nil, err
+	}
+
+	return instances, nil
+}
+
 func (c Mikrotik) DeleteBgpInstanceV7(name string) error {
 	return c.Delete(&BgpInstanceV7{Name: name})
 }

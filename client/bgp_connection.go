@@ -147,6 +147,28 @@ func (c Mikrotik) FindBgpConnection(name string) (*BgpConnection, error) {
 	return res.(*BgpConnection), nil
 }
 
+// ListBgpConnections returns all BGP connections for bulk operations
+func (c Mikrotik) ListBgpConnections() ([]*BgpConnection, error) {
+	client, err := c.getMikrotikClient()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := []string{"/routing/bgp/connection/print"}
+	reply, err := client.RunArgs(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	connections := make([]*BgpConnection, 0)
+	err = Unmarshal(*reply, &connections)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections, nil
+}
+
 func (c Mikrotik) DeleteBgpConnection(name string) error {
 	return c.Delete(&BgpConnection{Name: name})
 }
