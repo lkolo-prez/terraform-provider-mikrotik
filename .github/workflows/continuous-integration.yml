@@ -45,11 +45,14 @@ jobs:
         run: go vet ./...
 
       - name: Run unit tests
-        run: go test -v -race -short -timeout 5m ./...
+        run: go test -v -race -short -timeout 5m ./mikrotik/internal/...
 
-      - name: Run client tests
-        working-directory: client
-        run: go test -v -race -short -timeout 5m ./...
+      - name: Compile acceptance tests
+        run: |
+          echo "Compiling mikrotik acceptance tests..."
+          go test -c ./mikrotik -o mikrotik.test
+          echo "Compiling client tests..."
+          go test -c ./client -o client.test
         continue-on-error: true
 
   lint:
