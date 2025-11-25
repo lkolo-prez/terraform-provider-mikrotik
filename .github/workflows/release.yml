@@ -5,7 +5,7 @@
 # Required secrets:
 # - GPG_PRIVATE_KEY: Your GPG private key (export with: gpg --armor --export-secret-keys YOUR_KEY_ID)
 # - PASSPHRASE: Your GPG key passphrase
-# - GITHUB_TOKEN: Automatically provided by GitHub Actions
+# - GH_PAT: Personal Access Token with repo scope (for releases)
 #
 name: release
 
@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full history for changelog generation
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -49,11 +49,11 @@ jobs:
           args: release --clean
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Upload Terraform Registry Manifest
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
           TAG_NAME="${GITHUB_REF#refs/tags/}"
           MANIFEST_NAME="terraform-provider-mikrotik_${TAG_NAME}_manifest.json"
