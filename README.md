@@ -25,6 +25,8 @@ This provider has been updated to work with MikroTik RouterOS 7.x, including:
 
 **Feature Coverage**: See [ROUTEROS7_COVERAGE.md](./ROUTEROS7_COVERAGE.md) for implementation status
 
+**Release Process**: See [RELEASE_PROCESS.md](./RELEASE_PROCESS.md) for automated release workflow
+
 ## Support
 
 You can discuss any issues you have or feature requests in [Discord](https://discord.gg/ZpNq8ez).

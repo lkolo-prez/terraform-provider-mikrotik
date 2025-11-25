@@ -1,51 +1,51 @@
-# This GitHub action can publish assets for release when a tag is created.
-# Currently its setup to run on any tag that matches the pattern "v*" (ie. v0.1.0).
+# Release workflow - triggers on version tags (v*)
+# Builds multi-platform binaries, signs with GPG, publishes to GitHub Releases
+# For Terraform Registry publication, see: https://www.terraform.io/docs/registry/providers/publishing.html
 #
-# This uses an action (paultyng/ghaction-import-gpg) that assumes you set your
-# private key in the `GPG_PRIVATE_KEY` secret and passphrase in the `PASSPHRASE`
-# secret. If you would rather own your own GPG handling, please fork this action
-# or use an alternative one for key handling.
-#
-# You will need to pass the `--batch` flag to `gpg` in your signing step
-# in `goreleaser` to indicate this is being used in a non-interactive mode.
+# Required secrets:
+# - GPG_PRIVATE_KEY: Your GPG private key (export with: gpg --armor --export-secret-keys YOUR_KEY_ID)
+# - PASSPHRASE: Your GPG key passphrase
+# - GITHUB_TOKEN: Automatically provided by GitHub Actions
 #
 name: release
+
 on:
   push:
     tags:
       - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v3
-      -
-        name: Unshallow
-        run: git fetch --prune --unshallow
-      -
-        name: Set up Go
-        uses: actions/setup-go@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          go-version: 1.18
-      -
-        name: Import GPG key
+          fetch-depth: 0  # Full history for changelog generation
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Import GPG key
         id: import_gpg
-        # TODO: move this to HashiCorp namespace or find alternative that is just simple gpg commands
-        # see https://github.com/hashicorp/terraform-provider-scaffolding/issues/22
-        uses: paultyng/ghaction-import-gpg@v2.1.0
-        env:
-          # These secrets will need to be configured for the repository:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          PASSPHRASE: ${{ secrets.PASSPHRASE }}
-      -
-        name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: crazy-max/ghaction-import-gpg@v6
         with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-          # GitHub sets this automatically
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
