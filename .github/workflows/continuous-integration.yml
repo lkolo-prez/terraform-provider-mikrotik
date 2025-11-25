@@ -14,15 +14,21 @@ jobs:
     strategy:
       matrix:
         experimental: [false]
-        go: ["1.18"]
+        go: ["1.18", "1.19"]
         os: [ubuntu-latest]
-        # Test against latest stable 7.x versions
-        routeros: ["7.14.3", "7.16.2"]
+        # Test against multiple RouterOS 7.x versions for compatibility
+        routeros: ["7.14.3", "7.16.2", "7.17"]
         include:
+          # Test against latest unstable
           - experimental: true
-            go: 1.18
+            go: 1.19
             os: ubuntu-latest
             routeros: "latest"
+          # Test Go 1.20 with stable RouterOS
+          - experimental: true
+            go: "1.20"
+            os: ubuntu-latest
+            routeros: "7.16.2"
 
     steps:
       - name: Set up Go

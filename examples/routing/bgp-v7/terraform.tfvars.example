@@ -1,0 +1,27 @@
+# Example values - Copy to terraform.tfvars and customize
+
+# MikroTik Connection
+mikrotik_host     = "192.168.88.1:8728"
+mikrotik_username = "admin"
+mikrotik_password = ""  # Your password here
+mikrotik_tls      = false
+
+# Your BGP Configuration
+local_as          = 65001
+router_id         = "10.0.0.1"
+local_bgp_address = "10.0.0.1"
+
+# Primary ISP
+isp_as        = 65000
+isp_bgp_peer  = "10.0.0.2"
+bgp_password  = "your-secure-password"  # Optional MD5 auth
+
+# Backup ISP (Optional)
+enable_backup_isp      = false
+backup_isp_as          = 65002
+backup_isp_bgp_peer    = "10.0.1.2"
+bgp_backup_password    = "your-backup-password"
+
+# Advanced Options
+enable_bfd              = false
+firewall_drop_rule_id   = "*FFFFFFFE"  # Place BGP rules before this
