@@ -35,9 +35,6 @@ builds:
       - arm64
       - arm
       - '386'
-    goarm:
-      - '6'
-      - '7'
     ignore:
       - goos: darwin
         goarch: '386'
