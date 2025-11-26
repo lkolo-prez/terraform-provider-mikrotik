@@ -444,7 +444,7 @@ add area=backbone networks=192.168.100.0/30 type=ptp cost=100
 
 ### PHASE 2: WiFi & Infrastructure (Q2 2025)
 
-#### Issue #4: WiFi 6 (802.11ax) System
+#### Issue #4: WiFi 6 (802.11ax) System ✅ IMPLEMENTED v1.5.0
 
 ```bash
 gh issue create \
@@ -456,7 +456,8 @@ gh issue create \
 **RouterOS Path:** \`/interface/wifi/\`  
 **Priority:** P0 - HIGH  
 **Estimated Effort:** 3-4 weeks  
-**Attributes:** ~120 total across 6 resources
+**Attributes:** ~120 total across 6 resources  
+**Status:** ✅ COMPLETE - Implemented in v1.5.0
 
 ## Why Critical?
 
@@ -470,14 +471,14 @@ gh issue create \
 
 Modern wireless access points, WiFi 6 networks, WPA3 security, multi-SSID, guest networks.
 
-## Proposed Resources
+## Implemented Resources
 
-- [ ] \`mikrotik_interface_wifi\` - WiFi interface
-- [ ] \`mikrotik_wifi_configuration\` - WiFi profiles/configs
-- [ ] \`mikrotik_wifi_datapath\` - Data path settings (bridge, VLAN)
-- [ ] \`mikrotik_wifi_security\` - Security profiles (WPA3)
-- [ ] \`mikrotik_wifi_channel\` - Channel configuration
-- [ ] \`mikrotik_wifi_access_list\` - Access control
+- [x] \`mikrotik_interface_wifi\` - WiFi interface (15 attributes)
+- [x] \`mikrotik_wifi_configuration\` - WiFi profiles/configs (40+ attributes)
+- [x] \`mikrotik_wifi_datapath\` - Data path settings (bridge, VLAN) (20 attributes)
+- [x] \`mikrotik_wifi_security\` - Security profiles (WPA3) (20+ attributes)
+- [x] \`mikrotik_wifi_channel\` - Channel configuration (10 attributes)
+- [x] \`mikrotik_wifi_access_list\` - Access control (MAC filtering) (12 attributes)
 
 ## Example Configuration
 
