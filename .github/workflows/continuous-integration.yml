@@ -11,8 +11,9 @@ on:
       - main
 
 permissions:
-  contents: write  # Required for creating tags
+  contents: write  # Required for creating tags and releases
   pull-requests: read
+  packages: write  # Required for publishing
 
 jobs:
   build-and-test:
@@ -187,10 +188,81 @@ jobs:
             echo "- **New**: ${{ steps.new_version.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
             echo "- **Bump**: ${{ steps.version_bump.outputs.bump }}" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "🔄 Release workflow will now build and publish the provider..." >> $GITHUB_STEP_SUMMARY
+            echo "🔄 Building and publishing release..." >> $GITHUB_STEP_SUMMARY
           else
             echo "### ⏭️ Tests Passed (Tag Skipped)" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Tag ${{ steps.new_version.outputs.new_version }} already exists." >> $GITHUB_STEP_SUMMARY
           fi
 
+  build-and-release:
+    name: Build & Publish Release
+    needs: [auto-tag-and-release]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master' && !contains(github.event.head_commit.message, '[skip ci]')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Get the tag
+        id: get_new_tag
+        run: |
+          git fetch --tags --force
+          LATEST_TAG=$(git tag -l "v*.*.*" | sort -V | tail -n 1)
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "📌 Building release for: $LATEST_TAG"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Import GPG key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+
+      - name: Verify GPG import
+        run: |
+          echo "✅ GPG key imported successfully"
+          echo "Fingerprint: ${{ steps.import_gpg.outputs.fingerprint }}"
+          gpg --list-secret-keys
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean
+        env:
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Upload Terraform Registry Manifest
+        if: hashFiles('terraform-registry-manifest.json') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ steps.get_new_tag.outputs.tag }}"
+          MANIFEST_NAME="terraform-provider-mikrotik_${TAG_NAME}_manifest.json"
+          cp terraform-registry-manifest.json "${MANIFEST_NAME}"
+          gh release upload "${TAG_NAME}" "${MANIFEST_NAME}" --clobber || true
+          echo "✅ Manifest uploaded: ${MANIFEST_NAME}"
+
+      - name: Release Summary
+        run: |
+          TAG_NAME="${{ steps.get_new_tag.outputs.tag }}"
+          echo "### 🚀 Release Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${TAG_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "- **GPG Signed**: ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platforms**: Linux, Windows, macOS, FreeBSD (amd64, arm64, arm)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 [View Release](https://github.com/${{ github.repository }}/releases/tag/${TAG_NAME})" >> $GITHUB_STEP_SUMMARY

@@ -1,28 +1,28 @@
 # CI/CD Workflows
 
-System CI/CD dla Terraform Provider MikroTik z automatycznym przepływem: **Test → Tag → Build → Publish**
+System CI/CD dla Terraform Provider MikroTik - **JEDEN kompletny workflow**: Test → Tag → Build → Publish
 
-## 🔄 Jeden Ciągły Pipeline
+## 🔄 Jeden Workflow - Wszystko w Jednym
 
-**Kompletny automatyczny przepływ:**
+**WSZYSTKO w `continuous-integration.yml`:**
 
 ```
-Push → Testy → ✅ Sukces → Auto Tag → 🚀 Build & Publish
+Push → Tests → Lint → Auto Tag → Build → Publish
 ```
 
-Nie wymaga żadnej ręcznej interwencji - sukces testów automatycznie triggeruje wersjonowanie i publikację!
+**Zero osobnych plików** - cały proces w jednym workflow!
 
 ## 📋 Workflow
 
 ### 1. **Continuous Integration** (`continuous-integration.yml`)
 
-**Główny workflow - obsługuje testy, tagowanie i triggerowanie release**
+**JEDYNY główny workflow - kompletny proces od testu do publikacji**
 
 **Trigger**: 
 - Push do `master`/`main`
 - Pull requests
 
-**3 Fazy Wykonania:**
+**4 Fazy Wykonania:**
 
 #### Faza 1: Build & Test
 - Kompilacja na Go 1.22 i 1.23
@@ -34,9 +34,7 @@ Nie wymaga żadnej ręcznej interwencji - sukces testów automatycznie triggeruj
 #### Faza 2: Lint
 - `golangci-lint` - analiza jakości kodu
 
-#### Faza 3: Auto Tag & Release (tylko push do master)
-**Uruchamia się TYLKO po sukcesie testów!**
-
+#### Faza 3: Auto Tag (tylko push do master po sukcesie testów)
 1. Analiza commit message dla version bump:
    - `feat!:` lub `BREAKING CHANGE:` → major (vX.0.0)
    - `feat:` → minor (v0.X.0)
@@ -45,21 +43,7 @@ Nie wymaga żadnej ręcznej interwencji - sukces testów automatycznie triggeruj
 
 2. Utworzenie i push tagu wersji
 
-3. **Tag automatycznie triggeruje Release Workflow**
-
-**Status**: ✅ Aktywny
-
----
-
-### 2. **Release** (`release.yml`)
-
-**Buduje i publikuje binaria providera**
-
-**Trigger**: 
-- Nowe tagi wersji (v*.*.*)
-- Ręcznie przez workflow dispatch
-
-**Proces**:
+#### Faza 4: Build & Publish (zaraz po utworzeniu tagu)
 1. Import klucza GPG do podpisywania
 2. GoReleaser - build multi-platform binaries
 3. Podpisanie artefaktów GPG
@@ -72,11 +56,11 @@ Nie wymaga żadnej ręcznej interwencji - sukces testów automatycznie triggeruj
 - macOS (amd64, arm64)
 - FreeBSD (amd64)
 
-**Status**: ✅ Aktywny
+**Status**: ✅ Aktywny - KOMPLETNY PIPELINE
 
 ---
 
-### 3. **Documentation Validation** (`tfplugindocs.yml`)
+### 2. **Documentation Validation** (`tfplugindocs.yml`)
 
 **Walidacja dokumentacji Terraform**
 
@@ -88,7 +72,7 @@ Nie wymaga żadnej ręcznej interwencji - sukces testów automatycznie triggeruj
 
 ---
 
-### 4. **Integration Tests** (`integration-tests.yml`)
+### 3. **Integration Tests** (`integration-tests.yml`)
 
 **Pełne testy integracyjne z RouterOS**
 
@@ -122,8 +106,8 @@ graph TD
     H --> K[Push Tag do GitHub]
     I --> K
     J --> K
-    K --> L[🚀 Trigger Release Workflow]
-    L --> M[Build Multi-Platform]
+    K --> L[🚀 Build & Publish w tym samym workflow]
+    L --> M[Multi-Platform Binaries]
     M --> N[Podpisanie GPG]
     N --> O[GitHub Release]
     O --> P[Publikacja Terraform Registry]
@@ -155,8 +139,7 @@ BREAKING CHANGE: usunięta legacy autentykacja"
 
 | Workflow | Trigger | Cel | Status |
 |----------|---------|-----|--------|
-| Continuous Integration | Push/PR | Test, Tag, Trigger | ✅ Aktywny |
-| Release | Tag | Build & Publish | ✅ Aktywny |
+| Continuous Integration | Push/PR | Test → Tag → Build → Publish (WSZYSTKO) | ✅ Aktywny |
 | Documentation | PR | Walidacja Docs | ✅ Aktywny |
 | Integration Tests | Manualny | Pełne Testy RouterOS | ✅ Tylko Ręcznie |
 
@@ -197,12 +180,13 @@ git commit -m "feat: dodanie nowego resource"
 ### 5. Merge do master
 - Testy uruchamiają się ponownie
 - **Automatyczne utworzenie tagu based on commit**
-- **Release triggerowany automatycznie**
-- Provider publikowany
+- **Build i publikacja w tym samym workflow**
+- Provider publikowany - wszystko w jednym przebiegu!
 
 ## ⚡ Kluczowe Cechy
 
-✅ **Jeden ciągły pipeline** - od kodu do publikacji  
+✅ **JEDEN workflow - WSZYSTKO w jednym pliku**  
+✅ **Zero osobnych workflow** - kompletny proces w continuous-integration.yml  
 ✅ **Zero ręcznej interwencji** - wszystko automatyczne  
 ✅ **Semantic versioning** - based on conventional commits  
 ✅ **Testy najpierw** - release tylko po sukcesie testów  
@@ -212,10 +196,10 @@ git commit -m "feat: dodanie nowego resource"
 
 ## 🎉 Podsumowanie
 
-**Przepływ jest teraz w pełni zautomatyzowany:**
+**JEDEN workflow, JEDEN plik, KOMPLETNY proces:**
 
 ```
-Kod → Testy → Auto Tag → Build → Publish
+Kod → Testy → Tag → Build → Publish (wszystko w continuous-integration.yml)
 ```
 
-**Nie potrzebujesz nic robić ręcznie** - przejście testów automatycznie triggeruje wersjonowanie i release!
+**Nie ma osobnych workflow dla release** - wszystko jest w jednym miejscu!
