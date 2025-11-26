@@ -676,7 +676,7 @@ resource \"mikrotik_ip_address\" \"vrrp_virtual_ip\" {
 
 ---
 
-#### Issue #10: Firewall NAT 🔴 CRITICAL - MISSING
+#### Issue #10: Firewall NAT ✅ IMPLEMENTED v1.6.0
 
 ```bash
 gh issue create \
@@ -689,7 +689,7 @@ gh issue create \
 **Priority:** P0 - CRITICAL  
 **Estimated Effort:** 2-3 weeks  
 **Attributes:** ~50 total  
-**Status:** 🔴 NOT IMPLEMENTED - Blocking basic networking
+**Status:** ✅ COMPLETE - Implemented in v1.6.0
 
 ## Why Critical?
 
@@ -732,9 +732,11 @@ resource \"mikrotik_firewall_nat\" \"http_port_forward\" {
 \"
 ```
 
+✅ **STATUS: COMPLETE - Implemented in v1.6.0 (November 2025)**
+
 ---
 
-#### Issue #11: System Backup & Restore 🔴 CRITICAL - MISSING
+#### Issue #11: System Backup & Restore ✅ IMPLEMENTED v1.8.0
 
 ```bash
 gh issue create \
@@ -747,7 +749,7 @@ gh issue create \
 **Priority:** P0 - CRITICAL  
 **Estimated Effort:** 2-3 weeks  
 **Attributes:** ~15 total (backup), ~10 total (file)  
-**Status:** 🔴 NOT IMPLEMENTED - Blocking DR/automation
+**Status:** ✅ IMPLEMENTED v1.8.0
 
 ## Why Critical?
 
@@ -767,24 +769,22 @@ Automated daily/weekly backups, disaster recovery procedures, configuration vers
 resource \"mikrotik_system_backup\" \"daily_backup\" {
   name       = \"daily-backup-\${formatdate(\"YYYYMMDD\", timestamp())}\"
   password   = var.backup_password
-  encryption = true
-  save_action = true
 }
 
-# Scheduled automatic backup
-resource \"mikrotik_scheduler\" \"daily_backup_job\" {
-  name        = \"daily-backup\"
-  on_event    = \"/system/backup/save name=auto-backup password=\${var.backup_password}\"
-  start_time  = \"02:00:00\"
-  interval    = \"1d\"
+# Pre-change backup
+resource \"mikrotik_system_backup\" \"pre_change\" {
+  name     = \"before-firewall-update\"
+  password = var.backup_password
 }
 \`\`\`
 
 ## Priority Justification
 
-**BLOCKING:** No disaster recovery possible without backup/restore. Production environments require automated backups for compliance and risk management. This is P0-CRITICAL for v1.6.0.
+**BLOCKING:** No disaster recovery possible without backup/restore. Production environments require automated backups for compliance and risk management. This is P0-CRITICAL for v1.8.0.
 \"
 ```
+
+✅ **STATUS: COMPLETE - Implemented in v1.8.0 (November 2025)**
 
 ---
 
@@ -847,7 +847,7 @@ resource \"mikrotik_capsman_provisioning\" \"auto_provision\" {
 
 ---
 
-#### Issue #13: SNMP v3 Monitoring 🟡 IMPORTANT - MISSING
+#### Issue #13: SNMP v3 Monitoring ✅ IMPLEMENTED v1.7.0
 
 ```bash
 gh issue create \
@@ -856,11 +856,11 @@ gh issue create \
   --milestone "Q3 2025 - Monitoring & Observability" \
   --body "## Feature Description
 
-**RouterOS Path:** \`/snmp\`  
+**RouterOS Path:** `/snmp`  
 **Priority:** P1 - HIGH  
 **Estimated Effort:** 1-2 weeks  
 **Attributes:** ~20 total  
-**Status:** 🟡 NOT IMPLEMENTED - Blocking secure monitoring
+**Status:** ✅ COMPLETE - Implemented in v1.7.0
 
 ## Why Important?
 
@@ -902,7 +902,7 @@ resource \"mikrotik_snmp\" \"monitoring\" {
 
 ---
 
-#### Issue #14: System Logging 🟡 IMPORTANT - MISSING
+#### Issue #14: System Logging ✅ IMPLEMENTED v1.7.0
 
 ```bash
 gh issue create \
@@ -915,7 +915,7 @@ gh issue create \
 **Priority:** P1 - HIGH  
 **Estimated Effort:** 1-2 weeks  
 **Attributes:** ~15 total (action), ~10 total (logging)  
-**Status:** 🟡 NOT IMPLEMENTED - Blocking centralized logging
+**Status:** ✅ COMPLETE - Implemented in v1.7.0
 
 ## Why Important?
 
@@ -1320,9 +1320,22 @@ Add columns:
 
 ---
 
-## 🎯 Current Implementation Status (v1.5.0 - November 2025)
+## 🎯 Current Implementation Status (v1.8.0 - November 2025)
 
 ### ✅ IMPLEMENTED
+
+**System Backup & Disaster Recovery (v1.8.0 - NEW):**
+- ✅ `mikrotik_system_backup` - System backup creation and management
+
+**System Logging & Monitoring (v1.7.0):**
+- ✅ `mikrotik_system_logging_action` - Log destinations (remote syslog, disk, memory, email)
+- ✅ `mikrotik_system_logging` - Log topic routing
+- ✅ `mikrotik_snmp` - SNMP service configuration (SNMPv1/v2c, traps)
+- ✅ `mikrotik_snmp_community` - SNMP community access control
+
+**High Availability & Networking (v1.6.0):**
+- ✅ `mikrotik_interface_vrrp` - VRRP for router HA
+- ✅ `mikrotik_firewall_nat` - NAT rules (masquerade, dst-nat, src-nat)
 
 **Routing (v1.4.0):**
 - ✅ `mikrotik_ospf_instance_v7` - OSPF v2/v3 instances
@@ -1358,14 +1371,7 @@ Add columns:
 
 ### 🔴 MISSING - CRITICAL (Block Automation)
 
-**1. VRRP (High Availability)**
-- ❌ `mikrotik_interface_vrrp` - VRRP interface for router HA
-- **Path:** `/interface/vrrp`
-- **Priority:** P0-CRITICAL
-- **Use Case:** Active-backup routing, gateway redundancy
-- **Blockers:** HA deployments impossible
-
-**2. CAPsMAN (Centralized WiFi Management)**
+**1. CAPsMAN (Centralized WiFi Management)**
 - ❌ `mikrotik_capsman_manager` - CAPsMAN controller config
 - ❌ `mikrotik_capsman_configuration` - WiFi configs
 - ❌ `mikrotik_capsman_security` - Security profiles
@@ -1375,42 +1381,25 @@ Add columns:
 - **Use Case:** Manage 100+ APs centrally
 - **Blockers:** Legacy WiFi deployments (WiFi 6 uses `/interface/wifi`)
 
-**3. System Backup/Restore**
-- ❌ `mikrotik_system_backup` - Create/download backups (.backup)
+**2. System Export & File Upload**
 - ❌ `mikrotik_system_export` - Export configuration (.rsc)
 - ❌ `mikrotik_file_upload` - Upload files to router
-- **Path:** `/system/backup`, `/file`
-- **Priority:** P0-CRITICAL
-- **Use Case:** Disaster recovery, config snapshots
-- **Blockers:** No automated backup strategy
+- ❌ `mikrotik_file` - File management resource
+- **Path:** `/system/export`, `/file`
+- **Priority:** P1-HIGH
+- **Use Case:** Configuration export, file transfers
+- **Note:** Backup creation (mikrotik_system_backup) implemented in v1.8.0
 
-**4. Firewall NAT**
-- ❌ `mikrotik_ip_firewall_nat` - NAT rules (masquerade, dst-nat, src-nat)
+**4. Firewall NAT** ✅ IMPLEMENTED v1.6.0
+- ✅ `mikrotik_firewall_nat` - NAT rules (masquerade, dst-nat, src-nat)
 - **Path:** `/ip/firewall/nat`
-- **Priority:** P0-CRITICAL
-- **Use Case:** Internet sharing, port forwarding
-- **Blockers:** Basic networking requires NAT
+- **Status:** Implemented in v1.6.0
 
 ---
 
 ### 🟡 MISSING - IMPORTANT (Limit Automation)
 
-**5. SNMP v3**
-- ❌ `mikrotik_snmp_user` - SNMPv3 users with encryption
-- ❌ `mikrotik_snmp_community` (partial) - SNMPv2c communities
-- **Path:** `/snmp`, `/snmp/community`
-- **Priority:** P1-HIGH
-- **Use Case:** Secure monitoring integration
-- **Current:** Only SNMPv2c may be supported
-
-**6. System Logging**
-- ❌ `mikrotik_system_logging_action` - Log destinations (remote syslog, file, memory)
-- ❌ `mikrotik_system_logging` - Log topic routing
-- **Path:** `/system/logging`, `/system/logging/action`
-- **Priority:** P1-HIGH
-- **Use Case:** Centralized logging (Graylog, ELK, Splunk)
-
-**7. QoS & Traffic Shaping**
+**5. QoS & Traffic Shaping**
 - ❌ `mikrotik_queue_tree` - HTB queue trees
 - ❌ `mikrotik_queue_simple` - Simple queues
 - ❌ `mikrotik_ip_firewall_mangle` - Packet marking for QoS
