@@ -1,164 +1,221 @@
 # CI/CD Workflows
 
-Uporządkowany system CI/CD dla Terraform Provider MikroTik.
+System CI/CD dla Terraform Provider MikroTik z automatycznym przepływem: **Test → Tag → Build → Publish**
 
-## 📋 Przegląd Workflow
+## 🔄 Jeden Ciągły Pipeline
+
+**Kompletny automatyczny przepływ:**
+
+```
+Push → Testy → ✅ Sukces → Auto Tag → 🚀 Build & Publish
+```
+
+Nie wymaga żadnej ręcznej interwencji - sukces testów automatycznie triggeruje wersjonowanie i publikację!
+
+## 📋 Workflow
 
 ### 1. **Continuous Integration** (`continuous-integration.yml`)
-**Trigger**: Push/PR do `master`/`main`
 
-Podstawowy workflow budowania i testowania:
-- ✅ Budowanie dla Go 1.22, 1.23
-- ✅ Weryfikacja zależności (`go mod verify`)
-- ✅ Linting (`go vet`, `golangci-lint`)
-- ✅ Testy jednostkowe (`go test -short`)
-- ✅ Testy race condition
+**Główny workflow - obsługuje testy, tagowanie i triggerowanie release**
 
-**Status**: Aktywny - działa przy każdym commit
+**Trigger**: 
+- Push do `master`/`main`
+- Pull requests
 
----
+**3 Fazy Wykonania:**
 
-### 2. **Documentation Validation** (`tfplugindocs.yml`)
-**Trigger**: PR z zmianami w kodzie/dokumentacji
+#### Faza 1: Build & Test
+- Kompilacja na Go 1.22 i 1.23
+- Weryfikacja zależności (`go mod verify`)
+- `go vet` - analiza statyczna
+- Testy jednostkowe (`./mikrotik/internal/...`)
+- Kompilacja testów akceptacyjnych (walidacja składni)
 
-Sprawdza czy dokumentacja Terraform jest aktualna:
-- ✅ Generowanie dokumentacji (`go generate`)
-- ✅ Weryfikacja formatowania przykładów
-- ✅ Sprawdzanie niezacommitowanych zmian
+#### Faza 2: Lint
+- `golangci-lint` - analiza jakości kodu
 
-**Status**: Aktywny - działa przy PR
+#### Faza 3: Auto Tag & Release (tylko push do master)
+**Uruchamia się TYLKO po sukcesie testów!**
 
----
+1. Analiza commit message dla version bump:
+   - `feat!:` lub `BREAKING CHANGE:` → major (vX.0.0)
+   - `feat:` → minor (v0.X.0)
+   - `fix:` → patch (v0.0.X)
+   - inne → patch
 
-### 3. **Integration Tests** (`integration-tests.yml`)
-**Trigger**: Manualny (`workflow_dispatch`)
+2. Utworzenie i push tagu wersji
 
-Testy integracyjne z RouterOS:
-- 🔧 Wymaga kontenera RouterOS
-- 🔧 Wybór wersji RouterOS (7.14.3 - 7.17.1)
-- 🔧 Pełne testy API
-- 📊 Raport pokrycia funkcji
+3. **Tag automatycznie triggeruje Release Workflow**
 
-**Status**: Manualny - włączany na żądanie
-
-**Jak uruchomić**:
-```bash
-# GitHub UI: Actions → Integration Tests → Run workflow
-# Wybierz wersję RouterOS i Go
-```
+**Status**: ✅ Aktywny
 
 ---
 
-### 4. **Auto Release** (`auto-release.yml`)
-**Trigger**: Push do `master`
+### 2. **Release** (`release.yml`)
 
-Automatyczne tagowanie wersji:
-- 🏷️ `feat:` → wersja minor (v1.X.0)
-- 🏷️ `fix:` → wersja patch (v1.3.X)
-- 🏷️ `feat!:` lub `BREAKING CHANGE:` → wersja major (vX.0.0)
+**Buduje i publikuje binaria providera**
 
-**Format commitów**:
-```bash
-feat: add OSPF v3 support          # v1.4.0
-fix: resolve dependency conflict   # v1.3.8
-feat!: change API structure        # v2.0.0
-```
+**Trigger**: 
+- Nowe tagi wersji (v*.*.*)
+- Ręcznie przez workflow dispatch
 
-**Status**: Aktywny - automatyczne tagowanie
+**Proces**:
+1. Import klucza GPG do podpisywania
+2. GoReleaser - build multi-platform binaries
+3. Podpisanie artefaktów GPG
+4. Utworzenie GitHub Release
+5. Publikacja do Terraform Registry
 
----
+**Platformy**: 
+- Linux (amd64, arm64, arm)
+- Windows (amd64)
+- macOS (amd64, arm64)
+- FreeBSD (amd64)
 
-### 5. **Release** (`release.yml`)
-**Trigger**: Push tagu `v*`
-
-Budowanie i publikacja release:
-- 📦 Multi-platform binaries (Windows, Linux, macOS, ARM)
-- 🔐 Podpisywanie GPG
-- 📄 Generowanie changelog
-- 🚀 Publikacja do GitHub Releases
-- 📚 Przygotowanie dla Terraform Registry
-
-**Wymagane secrety**:
-- `GPG_PRIVATE_KEY` - klucz GPG do podpisywania
-- `PASSPHRASE` - hasło do klucza GPG
-- `GH_PAT` - Personal Access Token (opcjonalny)
-
-**Status**: Aktywny - działa przy tagach
+**Status**: ✅ Aktywny
 
 ---
 
-## 🔄 Przepływ Pracy
+### 3. **Documentation Validation** (`tfplugindocs.yml`)
+
+**Walidacja dokumentacji Terraform**
+
+**Trigger**: Pull requests
+
+**Proces**: Generuje i waliduje dokumentację tfplugindocs
+
+**Status**: ✅ Aktywny
+
+---
+
+### 4. **Integration Tests** (`integration-tests.yml`)
+
+**Pełne testy integracyjne z RouterOS**
+
+**Trigger**: Tylko manualnie (`workflow_dispatch`)
+
+**Wymaga**:
+- RouterOS 7.14.3 - 7.17.1
+- Zmienne środowiskowe:
+  - `MIKROTIK_HOST`
+  - `MIKROTIK_USER`
+  - `MIKROTIK_PASSWORD`
+
+**Status**: ✅ Aktywny (tylko manualnie)
+
+---
+
+## 🎯 Kompletny Przepływ CI/CD
 
 ```mermaid
-graph LR
-    A[Commit] --> B[CI Build & Test]
-    B --> C{Master?}
-    C -->|Yes| D[Auto Tag]
-    D --> E[Release v*]
-    E --> F[Build Artifacts]
-    F --> G[GitHub Release]
+graph TD
+    A[Push do master] --> B[Continuous Integration]
+    B --> C{Testy OK?}
+    C -->|Nie| D[❌ Fail - Brak Release]
+    C -->|Tak| E[✅ Wszystkie Testy Przeszły]
+    E --> F[Analiza Commit Message]
+    F --> G{Conventional Commit?}
+    G -->|feat!:/BREAKING| H[Utwórz Major Tag<br/>vX.0.0]
+    G -->|feat:| I[Utwórz Minor Tag<br/>v0.X.0]
+    G -->|fix:| J[Utwórz Patch Tag<br/>v0.0.X]
+    G -->|inne| J
+    H --> K[Push Tag do GitHub]
+    I --> K
+    J --> K
+    K --> L[🚀 Trigger Release Workflow]
+    L --> M[Build Multi-Platform]
+    M --> N[Podpisanie GPG]
+    N --> O[GitHub Release]
+    O --> P[Publikacja Terraform Registry]
     
-    H[PR] --> I[CI + Docs Check]
-    
-    J[Manual] --> K[Integration Tests]
+    PR[Pull Request] --> Q[Testy + Walidacja Docs]
+    Q --> R{Wszystkie Checks OK?}
+    R -->|Tak| S[✅ Gotowe do Merge]
+    R -->|Nie| T[❌ Popraw Problemy]
 ```
 
-## 📊 Aktualny Stan
+## 📝 Przykłady Conventional Commits
 
-| Workflow | Status | Częstotliwość |
-|----------|--------|---------------|
-| CI | ✅ Aktywny | Każdy commit |
-| Docs | ✅ Aktywny | Każdy PR |
-| Integration | 🔧 Manual | Na żądanie |
-| Auto Release | ✅ Aktywny | Push master |
-| Release | ✅ Aktywny | Tag v* |
-
-## 🚀 Jak Deployować
-
-### Normalny Feature/Fix:
 ```bash
-git add .
-git commit -m "feat: add new resource"  # lub "fix: ..."
-git push origin master
-# → Auto tag → Release
+# Patch release (v1.3.8)
+git commit -m "fix: naprawa timeoutu RouterOS"
+
+# Minor release (v1.4.0)
+git commit -m "feat: dodanie wsparcia WiFi 6"
+
+# Major release (v2.0.0)
+git commit -m "feat!: migracja do plugin framework v2"
+# lub
+git commit -m "feat: nowe API
+
+BREAKING CHANGE: usunięta legacy autentykacja"
 ```
 
-### Manual Release:
+## 📊 Status Workflows
+
+| Workflow | Trigger | Cel | Status |
+|----------|---------|-----|--------|
+| Continuous Integration | Push/PR | Test, Tag, Trigger | ✅ Aktywny |
+| Release | Tag | Build & Publish | ✅ Aktywny |
+| Documentation | PR | Walidacja Docs | ✅ Aktywny |
+| Integration Tests | Manualny | Pełne Testy RouterOS | ✅ Tylko Ręcznie |
+
+## 🔐 Wymagane Sekrety
+
+| Secret | Użycie | Wymagane Dla |
+|--------|--------|--------------|
+| `GITHUB_TOKEN` | Automatyczne (GitHub) | Wszystkie workflows |
+| `GPG_PRIVATE_KEY` | Podpisywanie providera | Release |
+| `PASSPHRASE` | Hasło klucza GPG | Release |
+| `MIKROTIK_HOST` | Adres RouterOS | Integration Tests |
+| `MIKROTIK_USER` | User RouterOS | Integration Tests |
+| `MIKROTIK_PASSWORD` | Hasło RouterOS | Integration Tests |
+
+## 🚀 Development Workflow
+
+### 1. Utwórz feature branch
 ```bash
-git tag -a v1.4.0 -m "Release v1.4.0"
-git push origin v1.4.0
-# → Release workflow
+git checkout -b feature/new-resource
 ```
 
-### Testowanie Integracyjne:
-1. Idź do **Actions** → **Integration Tests**
-2. Kliknij **Run workflow**
-3. Wybierz wersję RouterOS
-4. Zobacz wyniki i logi
-
-## ⚙️ Konfiguracja
-
-### Wymagane GitHub Secrets:
-```yaml
-GPG_PRIVATE_KEY: "-----BEGIN PGP PRIVATE KEY BLOCK-----..."
-PASSPHRASE: "your-gpg-passphrase"
-GH_PAT: "ghp_..." # opcjonalny
+### 2. Develop i testuj lokalnie
+```bash
+go test ./mikrotik/internal/...
+go build .
 ```
 
-### Wersje Go:
-- **Minimum**: 1.22
-- **Recommended**: 1.23
-- **CI Matrix**: 1.22, 1.23
+### 3. Commit z conventional format
+```bash
+git commit -m "feat: dodanie nowego resource"
+```
 
-## 📝 Uwagi
+### 4. Push i utwórz PR
+- CI automatycznie uruchamia testy
+- Walidacja dokumentacji
+- Code review
 
-1. **Testy integracyjne** wymagają kontenera RouterOS - uruchamiane manualnie
-2. **Auto-release** używa conventional commits do wersjonowania
-3. **Release workflow** wymaga prawidłowej konfiguracji GPG
-4. **Dokumentacja** musi być zawsze aktualna przed merge PR
+### 5. Merge do master
+- Testy uruchamiają się ponownie
+- **Automatyczne utworzenie tagu based on commit**
+- **Release triggerowany automatycznie**
+- Provider publikowany
 
-## 🔗 Linki
+## ⚡ Kluczowe Cechy
 
-- [Conventional Commits](https://www.conventionalcommits.org/)
-- [GoReleaser Docs](https://goreleaser.com/)
-- [Terraform Registry Publishing](https://www.terraform.io/docs/registry/providers/publishing.html)
+✅ **Jeden ciągły pipeline** - od kodu do publikacji  
+✅ **Zero ręcznej interwencji** - wszystko automatyczne  
+✅ **Semantic versioning** - based on conventional commits  
+✅ **Testy najpierw** - release tylko po sukcesie testów  
+✅ **Multi-platform builds** - Linux, Windows, macOS, FreeBSD  
+✅ **GPG signing** - podpisane artefakty  
+✅ **Terraform Registry** - automatyczna publikacja  
+
+## 🎉 Podsumowanie
+
+**Przepływ jest teraz w pełni zautomatyzowany:**
+
+```
+Kod → Testy → Auto Tag → Build → Publish
+```
+
+**Nie potrzebujesz nic robić ręcznie** - przejście testów automatycznie triggeruje wersjonowanie i release!
