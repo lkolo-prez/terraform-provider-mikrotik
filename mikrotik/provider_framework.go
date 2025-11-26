@@ -202,6 +202,7 @@ func (p *ProviderFramework) Resources(ctx context.Context) []func() resource.Res
 		NewFirewallFilterRuleResource,
 		NewInterfaceListMemberResource,
 		NewInterfaceListResource,
+		NewInterfaceVrrpResource,
 		NewInterfaceWireguardPeerResource,
 		NewInterfaceWireguardResource,
 		NewInterfaceWiFiResource,

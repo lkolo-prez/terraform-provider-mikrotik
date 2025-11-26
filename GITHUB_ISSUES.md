@@ -617,6 +617,350 @@ resource \"mikrotik_wifi_access_list\" \"whitelist\" {
 
 ---
 
+#### Issue #9: VRRP Interface ✅ IMPLEMENTED v1.6.0
+
+```bash
+gh issue create \
+  --title "[P0] Implement VRRP interface (mikrotik_interface_vrrp)" \
+  --label "P0-critical,routeros-v7,enhancement,area:interfaces" \
+  --milestone "Q3 2025 - High Availability" \
+  --body "## Feature Description
+
+**RouterOS Path:** \`/interface/vrrp\`  
+**Priority:** P0 - CRITICAL  
+**Estimated Effort:** 1-2 weeks  
+**Attributes:** ~12 total  
+**Status:** ✅ COMPLETE - Implemented in v1.6.0
+
+## Why Critical?
+
+- **High Availability:** Essential for router redundancy
+- **Gateway failover:** Seamless IP address takeover
+- **Enterprise requirement:** No HA possible without VRRP
+- **VRRPv2/v3 support:** Industry standard (RFC 3768, RFC 5798)
+- **Zero downtime:** Master/backup router configuration
+
+## Use Case
+
+Active-backup router pairs, gateway redundancy, automatic failover, load balancing across multiple routers, multi-WAN setups with redundant edge devices.
+
+## Example Configuration
+
+\`\`\`hcl
+# Master router configuration
+resource \"mikrotik_interface_vrrp\" \"gateway_master\" {
+  name            = \"vrrp-gateway\"
+  interface       = \"ether1\"
+  vrid            = 10
+  priority        = 254  # Higher = Master
+  authentication  = \"simple\"
+  password        = var.vrrp_password
+  interval        = \"1s\"
+  preemption_mode = true
+  version         = 3
+  v3_protocol     = \"ipv4\"
+}
+
+# Virtual IP address on VRRP interface
+resource \"mikrotik_ip_address\" \"vrrp_virtual_ip\" {
+  address   = \"192.168.1.1/24\"
+  interface = mikrotik_interface_vrrp.gateway_master.name
+}
+\`\`\`
+
+## Priority Justification
+
+**BLOCKING:** No high availability deployments possible without VRRP. Enterprise/production environments require router redundancy. This is a P0-CRITICAL resource that should be implemented in v1.6.0 as first priority.
+\"
+```
+
+---
+
+#### Issue #10: Firewall NAT 🔴 CRITICAL - MISSING
+
+```bash
+gh issue create \
+  --title "[P0] Implement Firewall NAT (mikrotik_firewall_nat)" \
+  --label "P0-critical,routeros-v7,enhancement,area:firewall" \
+  --milestone "Q3 2025 - Core Networking" \
+  --body "## Feature Description
+
+**RouterOS Path:** \`/ip/firewall/nat\`  
+**Priority:** P0 - CRITICAL  
+**Estimated Effort:** 2-3 weeks  
+**Attributes:** ~50 total  
+**Status:** 🔴 NOT IMPLEMENTED - Blocking basic networking
+
+## Why Critical?
+
+- **Internet sharing:** Masquerade for client networks
+- **Port forwarding:** Essential for server hosting
+- **NAT hairpin:** Internal access to public services
+- **Core networking:** Can't build routers without NAT
+
+## Use Case
+
+Internet sharing (masquerade), port forwarding (dst-nat), source NAT, hairpin NAT, multi-WAN load balancing, DMZ hosting.
+
+## Example Configuration
+
+\`\`\`hcl
+# Internet sharing - Masquerade
+resource \"mikrotik_firewall_nat\" \"masquerade_wan\" {
+  chain           = \"srcnat\"
+  action          = \"masquerade\"
+  out_interface   = \"ether1-wan\"
+  comment         = \"Masquerade LAN to WAN\"
+}
+
+# Port forwarding - HTTP server
+resource \"mikrotik_firewall_nat\" \"http_port_forward\" {
+  chain       = \"dstnat\"
+  action      = \"dst-nat\"
+  protocol    = \"tcp\"
+  dst_port    = \"80\"
+  in_interface = \"ether1-wan\"
+  to_addresses = \"192.168.1.100\"
+  to_ports     = \"80\"
+  comment      = \"Forward HTTP to web server\"
+}
+\`\`\`
+
+## Priority Justification
+
+**BLOCKING:** Can't build functional routers without NAT. Internet sharing and port forwarding are fundamental networking features. Every edge router deployment requires NAT. This is P0-CRITICAL for v1.6.0.
+\"
+```
+
+---
+
+#### Issue #11: System Backup & Restore 🔴 CRITICAL - MISSING
+
+```bash
+gh issue create \
+  --title "[P0] Implement System Backup & File Management (mikrotik_system_backup, mikrotik_file)" \
+  --label "P0-critical,routeros-v7,enhancement,area:system" \
+  --milestone "Q3 2025 - Disaster Recovery" \
+  --body "## Feature Description
+
+**RouterOS Paths:** \`/system/backup\`, \`/file\`  
+**Priority:** P0 - CRITICAL  
+**Estimated Effort:** 2-3 weeks  
+**Attributes:** ~15 total (backup), ~10 total (file)  
+**Status:** 🔴 NOT IMPLEMENTED - Blocking DR/automation
+
+## Why Critical?
+
+- **Disaster recovery:** Essential for production environments
+- **Configuration backup:** Automated config saves
+- **Compliance:** Required for audit trails
+- **Migration:** Config transfer between devices
+
+## Use Case
+
+Automated daily/weekly backups, disaster recovery procedures, configuration versioning, pre-change snapshots, remote backup storage.
+
+## Example Configuration
+
+\`\`\`hcl
+# Create encrypted backup
+resource \"mikrotik_system_backup\" \"daily_backup\" {
+  name       = \"daily-backup-\${formatdate(\"YYYYMMDD\", timestamp())}\"
+  password   = var.backup_password
+  encryption = true
+  save_action = true
+}
+
+# Scheduled automatic backup
+resource \"mikrotik_scheduler\" \"daily_backup_job\" {
+  name        = \"daily-backup\"
+  on_event    = \"/system/backup/save name=auto-backup password=\${var.backup_password}\"
+  start_time  = \"02:00:00\"
+  interval    = \"1d\"
+}
+\`\`\`
+
+## Priority Justification
+
+**BLOCKING:** No disaster recovery possible without backup/restore. Production environments require automated backups for compliance and risk management. This is P0-CRITICAL for v1.6.0.
+\"
+```
+
+---
+
+#### Issue #12: CAPsMAN Centralized WiFi Management 🔴 CRITICAL - MISSING
+
+```bash
+gh issue create \
+  --title "[P0] Implement CAPsMAN centralized WiFi management (mikrotik_capsman_*)" \
+  --label "P0-critical,routeros-v7,enhancement,area:wifi" \
+  --milestone "Q3 2025 - WiFi Management" \
+  --body "## Feature Description
+
+**RouterOS Path:** \`/caps-man/\`  
+**Priority:** P0 - CRITICAL (for legacy deployments)  
+**Estimated Effort:** 4-5 weeks  
+**Attributes:** ~80 total across 6 resources  
+**Status:** 🔴 NOT IMPLEMENTED - Blocking large WiFi deployments
+
+## Why Critical?
+
+- **Centralized management:** 100+ access points from single controller
+- **Legacy support:** Many deployments still use CAPsMAN (not WiFi 6)
+- **Zero-touch provisioning:** Auto-configuration of new APs
+- **Enterprise scale:** Large campus/hotel/warehouse WiFi
+
+## Use Case
+
+Large-scale WiFi deployments with 50-500+ access points, centralized configuration management, automatic AP provisioning, hotel/campus WiFi.
+
+## Example Configuration
+
+\`\`\`hcl
+# Enable CAPsMAN controller
+resource \"mikrotik_capsman_manager\" \"controller\" {
+  enabled     = true
+  certificate = mikrotik_certificate.controller.name
+}
+
+# WiFi configuration
+resource \"mikrotik_capsman_configuration\" \"corporate\" {
+  name     = \"corporate-5ghz\"
+  ssid     = \"CorpWiFi\"
+  mode     = \"ap\"
+  country  = \"poland\"
+  security = mikrotik_capsman_security.wpa2.name
+}
+
+# Auto-provisioning rule
+resource \"mikrotik_capsman_provisioning\" \"auto_provision\" {
+  action                = \"create-enabled\"
+  master_configuration  = mikrotik_capsman_configuration.corporate.name
+}
+\`\`\`
+
+## Priority Justification
+
+**CRITICAL for legacy deployments:** Many large-scale WiFi networks use CAPsMAN. Hotels, campuses, warehouses with 100-500 APs depend on CAPsMAN. P0-CRITICAL for v1.6.0 to support enterprise users.
+\"
+```
+
+---
+
+#### Issue #13: SNMP v3 Monitoring 🟡 IMPORTANT - MISSING
+
+```bash
+gh issue create \
+  --title "[P1] Implement SNMP v3 monitoring (mikrotik_snmp)" \
+  --label "P1-high,routeros-v7,enhancement,area:monitoring" \
+  --milestone "Q3 2025 - Monitoring & Observability" \
+  --body "## Feature Description
+
+**RouterOS Path:** \`/snmp\`  
+**Priority:** P1 - HIGH  
+**Estimated Effort:** 1-2 weeks  
+**Attributes:** ~20 total  
+**Status:** 🟡 NOT IMPLEMENTED - Blocking secure monitoring
+
+## Why Important?
+
+- **Enterprise monitoring:** Integration with NMS platforms
+- **SNMPv3 security:** Encrypted, authenticated monitoring
+- **Standard protocol:** Works with all monitoring tools
+- **Performance metrics:** CPU, memory, interfaces, traffic
+
+## Use Case
+
+Integration with Zabbix, PRTG, LibreNMS, Nagios, Prometheus SNMP exporters, centralized network monitoring, alerting systems.
+
+## Example Configuration
+
+\`\`\`hcl
+# Enable SNMP with v3 security
+resource \"mikrotik_snmp\" \"monitoring\" {
+  enabled  = true
+  contact  = \"noc@company.com\"
+  location = \"Datacenter A, Rack 12\"
+  
+  # SNMPv3 user
+  snmpv3_user {
+    name            = \"monitoring\"
+    authentication  = \"sha256\"
+    auth_password   = var.snmp_auth_password
+    encryption      = \"aes256\"
+    enc_password    = var.snmp_enc_password
+    security_level  = \"auth-priv\"
+  }
+}
+\`\`\`
+
+## Priority Justification
+
+**HIGH:** Enterprise monitoring requires secure SNMP. SNMPv3 is security requirement for compliance. Essential for production monitoring integration. P1-HIGH for v1.6.0.
+\"
+```
+
+---
+
+#### Issue #14: System Logging 🟡 IMPORTANT - MISSING
+
+```bash
+gh issue create \
+  --title "[P1] Implement System Logging (mikrotik_system_logging_*)" \
+  --label "P1-high,routeros-v7,enhancement,area:system" \
+  --milestone "Q3 2025 - Monitoring & Observability" \
+  --body "## Feature Description
+
+**RouterOS Path:** \`/system/logging/*\`  
+**Priority:** P1 - HIGH  
+**Estimated Effort:** 1-2 weeks  
+**Attributes:** ~15 total (action), ~10 total (logging)  
+**Status:** 🟡 NOT IMPLEMENTED - Blocking centralized logging
+
+## Why Important?
+
+- **Centralized logging:** Remote syslog integration
+- **Security auditing:** Firewall, login, system events
+- **Troubleshooting:** Real-time event tracking
+- **Compliance:** Audit trail requirements
+
+## Use Case
+
+Integration with Graylog, ELK Stack, Splunk, syslog-ng, security event monitoring, audit compliance, troubleshooting network issues.
+
+## Example Configuration
+
+\`\`\`hcl
+# Remote syslog action
+resource \"mikrotik_system_logging_action\" \"remote_syslog\" {
+  name   = \"remote-syslog\"
+  target = \"remote\"
+  remote = \"192.168.1.10:514\"
+  bsd_syslog = true
+}
+
+# Log firewall events
+resource \"mikrotik_system_logging\" \"firewall_logs\" {
+  topics  = [\"firewall\", \"info\"]
+  action  = mikrotik_system_logging_action.remote_syslog.name
+  prefix  = \"FW\"
+}
+
+# Log system critical events
+resource \"mikrotik_system_logging\" \"critical_logs\" {
+  topics = [\"critical\", \"error\"]
+  action = mikrotik_system_logging_action.remote_syslog.name
+}
+\`\`\`
+
+## Priority Justification
+
+**HIGH:** Centralized logging is essential for enterprise operations. Security compliance requires audit trails. P1-HIGH for v1.6.0.
+\"
+```
+
+---
+
 #### Issue #5: Container Support
 
 ```bash
@@ -973,3 +1317,145 @@ Add columns:
 **Total Issues to Create:** 8 (P0: 4, P1: 2, P2: 1, P3: 1)  
 **Estimated Timeline:** 6 months (Q1-Q3 2025)  
 **Target Coverage:** 80%+ by Q4 2025
+
+---
+
+## 🎯 Current Implementation Status (v1.5.0 - November 2025)
+
+### ✅ IMPLEMENTED
+
+**Routing (v1.4.0):**
+- ✅ `mikrotik_ospf_instance_v7` - OSPF v2/v3 instances
+- ✅ `mikrotik_ospf_area_v7` - OSPF areas with NSSA/stub
+- ✅ `mikrotik_ospf_interface_template_v7` - OSPF interface templates
+- ✅ `mikrotik_routing_filter_chain` - Routing filter chains
+- ✅ `mikrotik_routing_filter_rule` - Routing filter rules
+
+**WiFi 6 (v1.5.0):**
+- ✅ `mikrotik_interface_wifi` - WiFi 6 interfaces
+- ✅ `mikrotik_wifi_configuration` - SSID/mode/country/WiFi 6 params
+- ✅ `mikrotik_wifi_security` - WPA3, EAP, PMF, Fast Transition
+- ✅ `mikrotik_wifi_channel` - 2.4/5/6 GHz bands, DFS
+- ✅ `mikrotik_wifi_datapath` - Bridge/VLAN integration
+- ✅ `mikrotik_wifi_access_list` - MAC filtering
+
+**Container (v1.4.0):**
+- ✅ `mikrotik_container` - Container instances
+- ✅ `mikrotik_container_config` - Container registry configuration
+
+**VPN:**
+- ✅ `mikrotik_interface_wireguard` - WireGuard interfaces
+- ✅ `mikrotik_interface_wireguard_peer` - WireGuard peers
+
+**Automation:**
+- ✅ `mikrotik_script` - System scripts
+- ✅ `mikrotik_scheduler` - Script scheduler
+
+**Basic Resources:**
+- ✅ BGP, Bridge, DHCP, DNS, Firewall Filter, Interfaces, IP, Pool, VLAN
+
+---
+
+### 🔴 MISSING - CRITICAL (Block Automation)
+
+**1. VRRP (High Availability)**
+- ❌ `mikrotik_interface_vrrp` - VRRP interface for router HA
+- **Path:** `/interface/vrrp`
+- **Priority:** P0-CRITICAL
+- **Use Case:** Active-backup routing, gateway redundancy
+- **Blockers:** HA deployments impossible
+
+**2. CAPsMAN (Centralized WiFi Management)**
+- ❌ `mikrotik_capsman_manager` - CAPsMAN controller config
+- ❌ `mikrotik_capsman_configuration` - WiFi configs
+- ❌ `mikrotik_capsman_security` - Security profiles
+- ❌ `mikrotik_capsman_provisioning` - Auto-provisioning rules
+- **Path:** `/caps-man/`
+- **Priority:** P0-CRITICAL
+- **Use Case:** Manage 100+ APs centrally
+- **Blockers:** Legacy WiFi deployments (WiFi 6 uses `/interface/wifi`)
+
+**3. System Backup/Restore**
+- ❌ `mikrotik_system_backup` - Create/download backups (.backup)
+- ❌ `mikrotik_system_export` - Export configuration (.rsc)
+- ❌ `mikrotik_file_upload` - Upload files to router
+- **Path:** `/system/backup`, `/file`
+- **Priority:** P0-CRITICAL
+- **Use Case:** Disaster recovery, config snapshots
+- **Blockers:** No automated backup strategy
+
+**4. Firewall NAT**
+- ❌ `mikrotik_ip_firewall_nat` - NAT rules (masquerade, dst-nat, src-nat)
+- **Path:** `/ip/firewall/nat`
+- **Priority:** P0-CRITICAL
+- **Use Case:** Internet sharing, port forwarding
+- **Blockers:** Basic networking requires NAT
+
+---
+
+### 🟡 MISSING - IMPORTANT (Limit Automation)
+
+**5. SNMP v3**
+- ❌ `mikrotik_snmp_user` - SNMPv3 users with encryption
+- ❌ `mikrotik_snmp_community` (partial) - SNMPv2c communities
+- **Path:** `/snmp`, `/snmp/community`
+- **Priority:** P1-HIGH
+- **Use Case:** Secure monitoring integration
+- **Current:** Only SNMPv2c may be supported
+
+**6. System Logging**
+- ❌ `mikrotik_system_logging_action` - Log destinations (remote syslog, file, memory)
+- ❌ `mikrotik_system_logging` - Log topic routing
+- **Path:** `/system/logging`, `/system/logging/action`
+- **Priority:** P1-HIGH
+- **Use Case:** Centralized logging (Graylog, ELK, Splunk)
+
+**7. QoS & Traffic Shaping**
+- ❌ `mikrotik_queue_tree` - HTB queue trees
+- ❌ `mikrotik_queue_simple` - Simple queues
+- ❌ `mikrotik_ip_firewall_mangle` - Packet marking for QoS
+- **Path:** `/queue/tree`, `/queue/simple`, `/ip/firewall/mangle`
+- **Priority:** P1-HIGH
+- **Use Case:** Bandwidth management, traffic prioritization
+
+---
+
+### 🟢 MISSING - NICE-TO-HAVE
+
+**8. Certificates**
+- ❌ `mikrotik_certificate` - Import/generate certificates
+- **Path:** `/certificate`
+- **Priority:** P2-MEDIUM
+- **Use Case:** TLS/SSL for services, VPN certs
+
+**9. IPsec VPN**
+- ❌ `mikrotik_ip_ipsec_peer` - IPsec peers
+- ❌ `mikrotik_ip_ipsec_proposal` - IPsec proposals
+- ❌ `mikrotik_ip_ipsec_policy` - IPsec policies
+- **Path:** `/ip/ipsec/`
+- **Priority:** P2-MEDIUM
+- **Use Case:** Site-to-site VPN
+
+**10. Advanced Features**
+- ❌ `mikrotik_interface_vxlan` (planned Issue #8)
+- ❌ `mikrotik_zerotier` (planned Issue #7)
+- ❌ `mikrotik_queue_type` (CAKE/fq_codel - planned Issue #6)
+
+---
+
+### 📊 Coverage Summary
+
+| Category | Implemented | Missing | Coverage |
+|----------|-------------|---------|----------|
+| **CRITICAL** | 3/7 | 4 | 43% |
+| **HIGH** | 2/5 | 3 | 40% |
+| **MEDIUM** | 0/2 | 2 | 0% |
+| **Overall** | 5/14 | 9 | **36%** |
+
+**Next Priorities for v1.6.0+:**
+1. 🔴 VRRP (HA requirement)
+2. 🔴 Firewall NAT (basic networking)
+3. 🔴 System Backup (DR requirement)
+4. 🟡 SNMP v3 (secure monitoring)
+5. 🟡 System Logging (centralized logs)
+
