@@ -97,7 +97,15 @@ jobs:
       - name: Get latest tag
         id: get_tag
         run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.3.7")
+          # Fetch all tags and find the latest semantic version
+          git fetch --tags --force
+          LATEST_TAG=$(git tag -l "v*.*.*" | sort -V | tail -n 1)
+          
+          # If no tags exist, start from v1.3.7
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="v1.3.7"
+          fi
+          
           echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
           echo "📌 Latest tag: $LATEST_TAG"
 
