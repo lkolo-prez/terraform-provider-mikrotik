@@ -35,6 +35,7 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           cache: true
+          cache-dependency-path: go.sum
 
       - name: Verify dependencies
         run: |
@@ -71,6 +72,7 @@ jobs:
         with:
           go-version: '1.23'
           cache: true
+          cache-dependency-path: go.sum
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
@@ -105,6 +107,7 @@ jobs:
         with:
           go-version: '1.23'
           cache: true
+          cache-dependency-path: go.sum
 
       - name: Import GPG key
         id: import_gpg
