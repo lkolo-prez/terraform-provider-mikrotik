@@ -1,4 +1,18 @@
-# Mikrotik provider for Terraform 
+# Mikrotik provider for Terraform — extended for RouterOS 7
+
+> **About this repository.** This is an extended version of [ddelnano/terraform-provider-mikrotik](https://github.com/ddelnano/terraform-provider-mikrotik) (MIT), maintained by [Łukasz Kołodziej](https://github.com/lkolo-prez) ([AIRCLOUD](https://aircloud.com.pl)). All credit for the original provider goes to its authors and contributors.
+>
+> **Added here (11.2025, up to v1.8.0):**
+> - OSPF v3 (RouterOS 7)
+> - Container support
+> - Routing filters (RouterOS 7)
+> - VRRP interfaces for high availability
+> - Wi-Fi resource management (RouterOS 7)
+> - System backup and disaster recovery
+> - A unified CI/CD pipeline (test → build → release on tag) and dependency fixes
+>
+> Releases: [GitHub Releases](https://github.com/lkolo-prez/terraform-provider-mikrotik/releases). The original documentation on the Terraform Registry below describes the upstream provider.
+
 
 ## Intro
 
