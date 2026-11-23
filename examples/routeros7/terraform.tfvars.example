@@ -1,0 +1,5 @@
+mikrotik_host     = "192.168.88.1:8729"
+mikrotik_username = "terraform"
+# mikrotik_password, wifi_passphrase and backup_password: pass via TF_VAR_* env vars
+vrrp_priority = 200
+wifi_ssid     = "aircloud-lab"

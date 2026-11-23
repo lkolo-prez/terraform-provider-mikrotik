@@ -11,6 +11,8 @@
 > - System backup and disaster recovery
 > - A unified CI/CD pipeline (test → build → release on tag) and dependency fixes
 >
+> Examples for these additions: [`examples/routeros7/`](examples/routeros7/) (OSPFv3, VRRP, Wi-Fi, backup; passes `terraform validate`) and the [examples index](examples/README.md).
+>
 > Releases: [GitHub Releases](https://github.com/lkolo-prez/terraform-provider-mikrotik/releases). The original documentation on the Terraform Registry below describes the upstream provider.
 
 
